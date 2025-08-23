@@ -3,9 +3,9 @@ Contributors: looks_awesome, awesomeoman
 Donate link: http://looks-awesome.com/
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl.html
-Tags: facebook feed, instagram feed, twitter feed, pinterest feed, social media wall, custom instagram feed, instagram posts, hashtag feed, pinterest, pinterest feed, facebook posts, grid, hashtag, social, social board, social feed, social grid, social hub, social wall, social stream, stream, twitter, twitter feed, tweets, masonry grid, social wall, social media wall, social feed, social media feed, social media aggregator
+Tags: instagram feed, facebook feed, embed instagram, instagram widget, instagram gallery
 Requires at least: 5.0
-Tested up to: 6.5
+Tested up to: 6.7
 Stable tag: 4.7.5
 
 Display a mix of custom Facebook feed, Instagram feed, Twitter feed, Pinterest feed in grid gallery or widget.
