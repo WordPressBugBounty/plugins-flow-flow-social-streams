@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright 2005-2011, Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -255,3 +256,5 @@ class BasePlugin implements PluginInterface
         return $middleware;
     }
 }
+
+// phpcs:enable

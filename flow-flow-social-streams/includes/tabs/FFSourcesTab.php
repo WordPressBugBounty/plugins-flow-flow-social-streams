@@ -1,5 +1,6 @@
 <?php namespace flow\tabs;
 
+use la\core\LAUtils;
 use la\core\tabs\LATab;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -76,11 +77,18 @@ class FFSourcesTab implements LATab {
 											data-network-name="Instagram">
 											<i class="flaticon-instagram"></i>
 										</li>
-                                        <li class="network-pinterest"
-                                            data-network="pinterest"
-                                            data-network-name="Pinterest">
-                                            <i class="flaticon-pinterest"></i>
-                                        </li>
+										<li class="network-tiktok ff-feature"
+											data-network="tiktok"
+											data-network-name="TikTok">
+											<i class="flaticon-tiktok"></i>
+                                            <i class="ff-icon-lock"></i>
+										</li>
+										<li class="network-pinterest ff-feature"
+											data-network="pinterest"
+											data-network-name="Pinterest">
+											<i class="flaticon-pinterest"></i>
+                                            <i class="ff-icon-lock"></i>
+										</li>
 										<li class="network-youtube ff-feature"
 											data-network="youtube"
 											data-network-name="YouTube">
@@ -89,19 +97,17 @@ class FFSourcesTab implements LATab {
 										</li>
 										<li class="network-linkedin ff-feature"
 											data-network="linkedin"
-											data-network-name="LinkedIn">
+											data-network-name="LinkedIn" style="margin-right:0">
 											<i class="flaticon-linkedin"></i>
                                             <i class="ff-icon-lock"></i>
 										</li>
-
+										<br>
 										<li class="network-flickr ff-feature"
 											data-network="flickr"
-											data-network-name="Flickr" style="margin-right:0">
+											data-network-name="Flickr">
 											<i class="flaticon-flickr"></i>
                                             <i class="ff-icon-lock"></i>
 										</li>
-
-										<br>
 
                                         <li class="network-tumblr ff-feature"
                                             data-network="tumblr"
@@ -147,6 +153,9 @@ class FFSourcesTab implements LATab {
                                             <i class="ff-icon-lock"></i>
 										</li>
 									</ul>
+									<div class="ff-pro-purchase-link-wrapper" style="margin-top: 25px; text-align: center; font-size: 13px; clear: both; width: 100%;">
+										<a href="https://social-streams.com/flow/#pricing" target="_blank" class="ff-pro-purchase-link" style="color: #ff5252; font-weight: bold; text-decoration: none;">Get Flow-Flow PRO for more networks & features →</a>
+									</div>
 								</div>
 								<div class="networks-content  add-feed-step">
 									<div id="feed-views"></div>
@@ -173,7 +182,7 @@ class FFSourcesTab implements LATab {
 			</div>
 			<?php
 				/** @noinspection PhpIncludeInspection */
-				include($context['root']  . 'views/footer.php');
+				include(LAUtils::root($context)  . 'views/footer.php');
 			?>
 		</div>
 	<?php

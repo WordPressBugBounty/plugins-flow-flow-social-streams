@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -14,7 +15,15 @@
  */
 namespace Cake\Cache\Engine;
 
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'WPINC' ) && ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) ) {
+		exit;
+	}
+}
+
 // @deprecated 3.6.0 Add backwards compat alias.
 class_alias('Cake\Cache\Engine\ApcuEngine', 'Cake\Cache\Engine\ApcEngine');
 
 deprecationWarning('Use Cake\Cache\Engine\ApcuEngine instead of Cake\Cache\Engine\ApcEngine.');
+
+// phpcs:enable

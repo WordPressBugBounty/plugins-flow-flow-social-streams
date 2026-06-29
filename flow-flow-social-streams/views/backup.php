@@ -1,4 +1,13 @@
-<?php if ( ! defined( 'WPINC' ) ) die;
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) {
+		exit;
+	}
+}
+
+// phpcs:disable
+ if ( ! defined( 'WPINC' ) ) die;
 /**
  * Represents the view for the administration dashboard.
  *
@@ -15,8 +24,7 @@
 $export = '';
 $backups = $context['backups'];
 if ($context['boosts']){
-	/** @var \flow\db\LADBManager $dbm */
-	$dbm = $context['db_manager'];
+	$dbm = \la\core\LAUtils::dbm($context);
 	$token = $dbm->getToken();
 	$export = '. <a class="ff-pseudo-link" href="https://api.flowflowapp.com/api/v1/flow-flow/export?&token=' . $token . '" id="ff-download-posts-btn">Download stored posts as CSV</a>';
 }
@@ -51,11 +59,13 @@ if ($context['boosts']){
 			</tbody>
 		</table>
 
-        <span class="ff-icon-lock"></span> <span class='admin-button green-button create_backup'>Create new database snapshot</span> <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one‑time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>
+        <span class='admin-button green-button create_backup'>Create new database snapshot</span> <span class="ff-icon-lock"></span> <div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please make one‑time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>
 	</div>
 	<?php
 		/** @noinspection PhpIncludeInspection */
-		include($context['root']  . 'views/footer.php');
+		include(\la\core\LAUtils::root($context)  . 'views/footer.php');
 	?>
 
 </div>
+
+<?php // phpcs:enable ?>

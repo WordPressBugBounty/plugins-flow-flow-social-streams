@@ -1,5 +1,5 @@
 <?php namespace flow\db\migrations;
-use flow\db\FFDB;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -20,13 +20,11 @@ class FFMigration_2_14 implements ILADBMigration{
 
 	public function execute($conn, $manager) {
 		$tableName = $manager->image_cache_table_name;
-		if (!FFDB::existColumn($tableName, 'original_url')){
-			$conn->query("ALTER TABLE ?n ADD COLUMN ?n VARCHAR(300)", $tableName, 'original_url');
-		}
+		LADDLUtils::addColumnIfNotExist($conn, $tableName, 'original_url', 'VARCHAR(300)');
 
 		$tableName = str_replace('ff_image_cache', 'wss_image_cache', $tableName);
-		if (FFDB::existTable($tableName) && !FFDB::existColumn($tableName, 'original_url')){
-			$conn->query("ALTER TABLE ?n ADD COLUMN ?n VARCHAR(300)", $tableName, 'original_url');
+		if (LADDLUtils::existTable($conn, $tableName)){
+            LADDLUtils::addColumnIfNotExist($conn, $tableName, 'original_url', 'VARCHAR(300)');
 		}
 	}
 }

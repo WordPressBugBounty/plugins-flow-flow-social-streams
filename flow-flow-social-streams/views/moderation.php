@@ -1,11 +1,18 @@
-<?php if ( ! defined( 'WPINC' ) ) die;
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) {
+		exit;
+	}
+}
+
+// phpcs:disable
+ if ( ! defined( 'WPINC' ) ) die;
 /**
  * Represents the view for the administration dashboard.
  *
  * This includes the header, options, and other information that should provide
  * The User Interface to the end user.
- *
- * @var array $context
  *
  * @package   FlowFlow
  * @author    Looks Awesome <email@looks-awesome.com>
@@ -18,7 +25,7 @@ $arr = $context['streams'];
 	<div class="section" id="moderation-settings">
 		<h1 class="desc-following"><span>Moderation mode for streams</span></h1>
 		<p class="desc">Set if stream posts need approval or not. Approve
-			posts right on site pages. Users will see only approved posts.</p>
+			posts right on website pages. Users will see only approved posts.</p>
 		<table>
 			<thead>
 			<tr>
@@ -54,3 +61,4 @@ $arr = $context['streams'];
 
 	</div>
 </div>
+<?php // phpcs:enable ?>

@@ -1,5 +1,6 @@
 <?php namespace flow\tabs;
 
+use la\core\LAUtils;
 use la\core\tabs\LATab;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -31,6 +32,6 @@ class FFAddonsTab implements LATab{
 
 	public function includeOnce( $context ) {
 		/** @noinspection PhpIncludeInspection */
-		include_once($context['root']  . 'views/addons.php');
+		include_once(LAUtils::root($context)  . 'views/addons.php');
 	}
 }

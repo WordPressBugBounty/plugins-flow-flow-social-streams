@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -122,3 +123,5 @@ class Mcrypt
         return $result === '' ? false : $result;
     }
 }
+
+// phpcs:enable

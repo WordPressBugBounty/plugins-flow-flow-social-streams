@@ -1,5 +1,5 @@
 <?php namespace flow\db\migrations;
-use flow\db\FFDB;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -19,7 +19,7 @@ class FFMigration_2_10 implements ILADBMigration{
 	}
 
 	public function execute($conn, $manager) {
-		if (!FFDB::existColumn($manager->posts_table_name, 'post_status')){
+		if (!LADDLUtils::existColumn($conn, $manager->posts_table_name, 'post_status')){
 			$conn->query("ALTER TABLE ?n ADD ?n VARCHAR(15) NOT NULL DEFAULT 'approved'", $manager->posts_table_name, 'post_status');
 		}
 	}

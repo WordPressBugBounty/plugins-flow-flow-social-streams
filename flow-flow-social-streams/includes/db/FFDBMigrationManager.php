@@ -1,8 +1,8 @@
 <?php namespace flow\db;
+if ( ! defined( 'WPINC' ) ) die;
 
 use la\core\db\LADBMigrationManager;
 
-if ( ! defined( 'WPINC' ) ) die;
 /**
  * Insta Flow.
  *
@@ -13,12 +13,11 @@ if ( ! defined( 'WPINC' ) ) die;
  * @copyright Looks Awesome
  */
 class FFDBMigrationManager extends LADBMigrationManager{
-	
-	protected function migrations(){
-		$result = array();
-		foreach ( glob($this->context['root'] . 'includes/db/migrations/FFMigration_*.php') as $filename ) {
-			$result[] = 'flow\\db\\migrations\\' . basename($filename, ".php");
-		}
-		return $result;
-	}
+    protected function migrations(){
+        $result = [];
+        foreach ( glob($this->context['root'] . 'includes/db/migrations/FFMigration_*.php') as $filename ) {
+            $result[] = 'flow\\db\\migrations\\' . basename($filename, ".php");
+        }
+        return $result;
+    }
 }

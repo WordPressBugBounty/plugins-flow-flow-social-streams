@@ -1,7 +1,5 @@
 <?php namespace flow\db\migrations;
 
-use flow\db\LADBManager;
-use flow\db\SafeMySQL;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -20,10 +18,6 @@ class FFMigration_3_7 implements ILADBMigration{
 		return '3.7';
 	}
 
-	/**
-	 * @param SafeMySQL $conn
-	 * @param LADBManager $manager
-	 */
 	public function execute( $conn, $manager ) {
 		$conn->query('ALTER TABLE ?n MODIFY ?n VARCHAR(500)', $manager->posts_table_name, 'location');
 	}

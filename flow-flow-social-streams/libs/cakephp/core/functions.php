@@ -1,4 +1,10 @@
 <?php
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'WPINC' ) && ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) ) {
+		exit;
+	}
+}
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -324,3 +330,5 @@ if (!function_exists('getTypeName')) {
         return is_object($var) ? get_class($var) : gettype($var);
     }
 }
+
+// phpcs:enable

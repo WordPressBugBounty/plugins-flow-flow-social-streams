@@ -1,5 +1,5 @@
 <?php namespace flow\db\migrations;
-use flow\db\FFDB;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -19,8 +19,8 @@ class FFMigration_2_12 implements ILADBMigration{
 	}
 
 	public function execute($conn, $manager) {
-		if (FFDB::existColumn($manager->streams_table_name, 'status')){
-			$conn->query("ALTER TABLE ?n DROP `status`",  $manager->streams_table_name);
+		if (LADDLUtils::existColumn($conn, $manager->streams_table_name, 'status')){
+            LADDLUtils::dropColumn($conn, $manager->streams_table_name, 'status');
 		}
 	}
 }

@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -67,3 +68,5 @@ trait FileConfigTrait
         throw new Exception(sprintf('Could not load configuration file: %s', $file));
     }
 }
+
+// phpcs:enable

@@ -1,0 +1,35 @@
+{
+    "name": "flowflow/core",
+    "type": "library",
+    "description": "The core lib for products of looks awesome company",
+    "license": "proprietary",
+    "authors": [
+        {
+            "name": "Nikolay Avdeykin",
+            "email": "navdeykin@gmail.com"
+        }
+    ],
+    "require": {
+        "mashape/unirest-php": "^3.0.4",
+        "colshrapnel/safemysql": "dev-master",
+        "flowflow/social": "dev-remove_open_api",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-gd": "*",
+        "ext-mysqli": "*",
+        "ext-mbstring": "*",
+        "ext-zlib": "*"
+    },
+    "autoload": {
+        "psr-4": {"la\\core\\": "src/"}
+    },
+    "autoload-dev": {
+        "files": ["src/dev/functions.php"]
+    },
+    "repositories": [
+        {
+            "type": "git",
+            "url": "https://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@github.com/Gorkiy/FlowSocial.git"
+        }
+    ]
+}

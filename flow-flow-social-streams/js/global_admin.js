@@ -212,7 +212,7 @@
 
       var defer = $.Deferred();
 
-      if ( /*Cookie.get( 'ff_first_time' ) &&*/ ( ! sessionCookie ) || ( sessionCookie && sessionCookie !== 'no_data' && sessionCookie !== 'seen' && location.href.indexOf('page=flow-flow') !== -1 ) ) {
+      if ( /*Cookie.get( 'ff_first_time' ) &&*/ ( ! sessionCookie ) || ( sessionCookie && /*sessionCookie !== 'no_data' &&*/ sessionCookie !== 'seen' && location.href.indexOf('page=flow-flow') !== -1 ) ) {
 
         setEvents();
         
@@ -440,39 +440,17 @@
       tryToAddNotification: tryToAddNotification
     }
   })();
-	
-  $( document ).one('html_ready', doStuffOnReady)
+
+
+  $( document ).one('html_ready', doStuff)
   $( function () {
-	  doStuffOnReady();
+    doStuff();
   });
   
-  function doStuffOnReady() {
-    
+  function doStuff() {
       if (processed) return false;
       processed = true;
-      
-      /* plugins page notice */
-      // works only if notice is present
-	  var $notice = $( '#ff-boost-pro-notice' );
-	  
-	  if ( $notice.length ) {
-		
-		  $notice.find( '.button' ).click( function () {
-			  $notice.slideUp();
-		  })
-	   
-		  $notice.find( '#ff-boost-notice-dismiss' ).change( function () {
-              if ( this.checked ) {
-	              Cookie.set( 'ff_notice_dismissed', 1, { expires: 60 } )
-              } else {
-	              Cookie.remove( 'ff_notice_dismissed' )
-              }
-		  });
-		  
-      }
-      
-      /**/
-      
+  
       TickerController.init()
           .then( TickerController.injectView )
           .always( TickerController.tryToAddNotification )
@@ -481,4 +459,5 @@
           });
   }
 
-})( window.jQuery, window.FF_Cookie )
+
+})(window.jQuery, window.FF_Cookie)

@@ -1,0 +1,27 @@
+<phpunit
+	bootstrap="tests/bootstrap.php"
+	colors="true"
+	convertErrorsToExceptions="true"
+	convertNoticesToExceptions="true"
+	convertWarningsToExceptions="true"
+	>
+	<testsuites>
+		<testsuite name="tests">
+			<directory suffix="Test.php">./tests</directory>
+		</testsuite>
+	</testsuites>
+
+	<filter>
+		<whitelist>
+			<directory suffix=".php">./src/</directory>
+			<exclude>
+				<!--<directory suffix=".php">./tests/</directory>-->
+				<!--<directory suffix=".php">./node_modules/</directory>-->
+				<!--<directory suffix=".php">./demo/</directory>-->
+				<!--<directory suffix=".php">./plugins/</directory>-->
+				<!--<directory suffix=".php">./site/</directory>-->
+				<!--<directory suffix=".php">./views/</directory>-->
+			</exclude>
+		</whitelist>
+	</filter>
+</phpunit>

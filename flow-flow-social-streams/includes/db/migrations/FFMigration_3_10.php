@@ -1,9 +1,7 @@
 <?php namespace flow\db\migrations;
 if ( ! defined( 'WPINC' ) ) die;
 
-use flow\db\FFDB;
-use flow\db\LADBManager;
-use flow\db\SafeMySQL;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 /**
@@ -21,13 +19,7 @@ class FFMigration_3_10 implements ILADBMigration {
 		return '3.10';
 	}
 
-	/**
-	 * @param SafeMySQL $conn
-	 * @param LADBManager $manager
-	 */
 	public function execute( $conn, $manager ) {
-		if (!FFDB::existColumn($manager->cache_table_name, 'boosted')){
-			$conn->query('ALTER TABLE ?n ADD ?n VARCHAR(4) DEFAULT \'nope\'', $manager->cache_table_name, 'boosted');
-		}
+        LADDLUtils::addColumnIfNotExist($conn, $manager->cache_table_name, 'boosted', "VARCHAR(4) DEFAULT 'nope'");
 	}
 }

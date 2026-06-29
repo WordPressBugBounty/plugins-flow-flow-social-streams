@@ -1,0 +1,93 @@
+<?php
+// phpcs:disable
+ namespace flow\social;
+
+if ( ! defined( 'WPINC' ) ) die;
+
+/**
+ * ff2
+ *
+ * @package   FlowFlow
+ * @author    Looks Awesome <email@looks-awesome.com>
+ *
+ * @link      http://looks-awesome.com
+ * @copyright 2014-2018 Looks Awesome
+ */
+class LASocialException extends \Exception {
+	/** @var array */
+	protected $options;
+	/** @var mixed */
+	private $problem;
+
+	/**
+	 * LASocialException constructor.
+	 *
+	 * @param mixed $message
+	 * @param array $options
+	 * @param mixed $problem
+	 */
+	public function __construct( $message = '', $options = array(), $problem = null) {
+		parent::__construct($message);
+		$this->options = $options;
+		$this->problem = $problem;
+	}
+
+	public function __toString() {
+		$text = parent::__toString();
+		if (!is_null($this->problem)){
+			$text .= "\n Problem object:\n";
+			$text .= print_r($this->problem, true);
+			$text .= "\n";
+		}
+		return $text;
+	}
+
+
+	/**
+	 * @param mixed $message
+	 */
+	public function setMessage( $message ) {
+		$this->message = $message;
+	}
+
+	public function getSocialError(){
+		$message = $this->filter_error_message($this->getMessage());
+		if (!empty($this->getMessage())){
+			$this->options['message'] = $message;
+		}
+		return $this->options;
+	}
+
+	/**
+	 * @return mixed
+	 */
+	public function getProblem() {
+		return $this->problem;
+	}
+
+	private function filter_error_message($message){
+		if (is_array($message)){
+			if (sizeof($message) > 0 && isset($message[0]['msg'])){
+				$str = stripslashes(htmlspecialchars($message[0]['msg'], ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+				if ( function_exists( 'mb_convert_encoding' ) ) {
+					return mb_convert_encoding( $str, 'UTF-8', 'ISO-8859-1' );
+				}
+				$conv = '';
+				for ($i = 0; $i < strlen($str); $i++) {
+					$c = ord($str[$i]);
+					if ($c < 128) {
+						$conv .= $str[$i];
+					} else {
+						$conv .= chr(192 + ($c >> 6)) . chr(128 + ($c & 63));
+					}
+				}
+				return $conv;
+			}
+			else {
+				return '';
+			}
+		}
+		return stripslashes(htmlspecialchars($message, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'));
+	}
+}
+// phpcs:enable

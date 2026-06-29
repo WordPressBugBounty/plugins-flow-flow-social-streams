@@ -1,18 +1,18 @@
 var ff_templates = {
-    streamRow:      '<td class="controls"><div class="loader-wrapper"><div class="throbber-loader"></div></div><i class="flaticon-tool_edit"></i> <i class="flaticon-tool_clone"></i> <i class="flaticon-tool_delete"></i></td><td><span class="cache-status-<%= status %>"></span></td><td class="td-name"><%= name %></td> <td class="td-type"><%= type %></span></td> <td class="td-feed"><%= feeds %></td><td><span class="shortcode">[ff id="<%= id %>"]</span><span class="desc hint-block">\n' +
-                        '                <span class="hint-link"><img src="<%= plugin_url %>/assets/info_icon.svg"></span>\n' +
-                        '                <span class="hint hint-pro">\n' +
-                        '                    <h3>Shortcode detected on pages:</h3>\n' +
-                        '                    <p class="shortcode-pages"></p>\n' +
-                        '                    </span>\n' +
-                        '            </span></td>',
+    streamRow: '<td class="controls"><div class="loader-wrapper"><div class="throbber-loader"></div></div><i class="flaticon-tool_edit"></i> <i class="flaticon-tool_clone"></i> <i class="flaticon-tool_delete"></i></td><td><span class="cache-status-<%= status %>"></span></td><td class="td-name"><%= name %></td> <td class="td-type"><%= type %></span></td> <td class="td-feed"><%= feeds %></td><td><span class="shortcode">[ff id="<%= id %>"]</span><span class="desc hint-block">\n' +
+        '                <span class="hint-link"><img src="<%= plugin_url %>/assets/info_icon.svg"></span>\n' +
+        '                <span class="hint hint-pro">\n' +
+        '                    <h3>Shortcode detected on pages:</h3>\n' +
+        '                    <p class="shortcode-pages"></p>\n' +
+        '                    </span>\n' +
+        '            </span></td>',
     streamRowEmpty: '<tr class="empty-row"><td class="empty-cell" colspan="6">Please create at least one stream</td></tr>',
     listRowEmpty: '<tr><td  class="empty-cell" colspan="4">Add at least one feed</td></tr>',
 
-    view:           '<input type="hidden" name="stream-<%= id %>-id" class="stream-id-value" value="<%= id %>"/>\
+    view: '<input type="hidden" name="stream-<%= id %>-id" class="stream-id-value" value="<%= id %>"/>\
                 <div class="section clearfix" id="stream-name-<%= id %>">\
                     <h1 class="float-left"><%= header %><span class="admin-button grey-button button-go-back">Go back to list</span></h1>\
-                    <p class="float-left input-not-obvious"><input type="text" name="stream-<%= id %>-name" placeholder="Type name and hit Enter..."/>\
+                    <p class="float-left input-not-obvious"><input type="text" name="stream-<%= id %>-name" placeholder="Type name and hit Enter..."/><span class="admin-button green-button button-save-name">Save</span></p>\
                     <ul class="view-tabs float-left"><li class="tab-cursor"></li><li data-tab="source">source</li><li data-tab="general">general</li><%= TVtab %><li data-tab="grid">layout</li><li data-tab="stylings">styling</li><li data-tab="css">css</li><li data-tab="shortcode">shortcode</li></ul>\
                 </div>\
                 <div class="section" id="stream-feeds-<%= id %>" data-tab="source">\
@@ -28,14 +28,13 @@ var ff_templates = {
     <div class="section"  data-tab="general" id="stream-settings-<%= id %>">\
         <h1>Stream general settings</h1>\
         <dl class="section-settings section-compact">\
-                <dt><span class="ff-icon-lock"></span> Items order\
+                <dt>Items order\
                 <p class="desc">Choose rule how stream sorts posts.<br>Proportional sorting guarantees that all networks are always present on first load.</p>\
-                <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
                 </dt>\
-                <dd class="ff-feature">\
-                    <input id="stream-<%= id %>-smart-date-order" type="radio" name="stream-<%= id %>-order" value="smartCompare"/>\
+                <dd>\
+                    <input id="stream-<%= id %>-smart-date-order" type="radio" name="stream-<%= id %>-order" checked value="smartCompare"/>\
                     <label for="stream-<%= id %>-smart-date-order">Proportional by date</label><br><br>\
-                    <input id="stream-<%= id %>-date-order" type="radio" name="stream-<%= id %>-order" checked value="compareByTime"/>\
+                    <input id="stream-<%= id %>-date-order" type="radio" name="stream-<%= id %>-order" value="compareByTime"/>\
                     <label for="stream-<%= id %>-date-order">Strictly by date</label><br><br>\
                         <input id="stream-<%= id %>-random-order" type="radio" name="stream-<%= id %>-order" value="randomCompare"/>\
                         <label for="stream-<%= id %>-random-order">Random</label>\
@@ -58,16 +57,16 @@ var ff_templates = {
                         <dd class="hidden">\
                             <label for="stream-<%= id %>-cache-lifetime"><input id="stream-<%= id %>-cache-lifetime" class="short clearcache" type="text" name="stream-<%= id %>-cache-lifetime" value="10"/> minutes</label>\
                         </dd>\
-                        <dt class="multiline"><span class="ff-icon-lock"></span> Show gallery on card click\
+                        <dt class="multiline">Show lightbox on card click <span class="ff-icon-lock"></span>\
                             <p class="desc">If disabled, click on the card will open original post.</p>\
-                            <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+                            <div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
                             </dt>\
                         <dd class="ff-feature">\
                             <label for="stream-<%= id %>-gallery"><input id="stream-<%= id %>-gallery" class="switcher" type="checkbox" checked name="stream-<%= id %>-gallery" value="yep"/><div><div></div></div></label>\
                         </dd>\
-                        <dt class="multiline"><span class="ff-icon-lock"></span> Gallery type\
+                        <dt class="multiline">Lightbox type <span class="ff-icon-lock"></span>\
                             <p class="desc">Choose between classic lightbox style or scrollable news feed.</p>\
-                            <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+                            <div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
                             </dt>\
                         <dd class="ff-feature">\
                             <div class="select-wrapper">\
@@ -105,11 +104,8 @@ var ff_templates = {
                         <dd>\
                             <label for="stream-<%= id %>-hidetext"><input id="stream-<%= id %>-hidetext" class="switcher" type="checkbox" name="stream-<%= id %>-hidetext" value="yep"/><div><div></div></div></label>\
                         </dd>\
-                        <dt class="multiline"><span class="ff-icon-lock"></span> Max resolution of card images\
-                        <p class="desc">Use only for streams with large-sized posts. Not recommended for default stream design.</p>\
-                        <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
-                        </dt>\
-                        <dd class="ff-feature">\
+                        <dt class="multiline">Max image resolution<p class="desc">Use only for streams with large-sized posts. Not recommended for default stream design.</p></dt>\
+                        <dd>\
                         <label for="stream-<%= id %>-max-res"><input id="stream-<%= id %>-max-res" class="switcher" type="checkbox" name="stream-<%= id %>-max-res" value="nope"/><div><div></div></div></label>\
                         </dd>\
                     </dl>\
@@ -128,7 +124,7 @@ var ff_templates = {
                 <span class="hint-link hint-default"><i class="sprite-grid"></i>Grid</span>\
                 <div class="hint hint-layout">\
                     <h1>PREMIUM FEATURE</h1>\
-                    To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.\
+                    To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.\
                 </div>\
             </div><br><span class="desc">Classic grid with posts of the same height. Recommended for posts of similar format.</span></label>\
         <input name="stream-<%= id %>-layout" class="clearcache" id="stream-layout-justified-<%= id %>" type="radio" value="justified"/>\
@@ -136,7 +132,7 @@ var ff_templates = {
                 <span class="hint-link hint-default"><i class="sprite-justified"></i>Justified</span>\
                 <div class="hint hint-layout">\
                     <h1>PREMIUM FEATURE</h1>\
-                    To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.\
+                    To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.\
                 </div>\
             </div><br><span class="desc">One-height posts with dynamic width. Only for image posts.</span></label>\
         <input name="stream-<%= id %>-layout" class="clearcache" id="stream-layout-list-<%= id %>" type="radio" value="list"/>\
@@ -144,7 +140,7 @@ var ff_templates = {
                 <span class="hint-link hint-default"><i class="sprite-list"></i>Wall</span>\
                 <div class="hint hint-layout">\
                     <h1>PREMIUM FEATURE</h1>\
-                    To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.\
+                    To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.\
                 </div>\
             </div><br><span class="desc">Classic news feed like layout. Easily integrates in any part of your site.</span></label>\
         <input name="stream-<%= id %>-layout" class="clearcache" id="stream-layout-carousel-<%= id %>" type="radio" value="carousel"/>\
@@ -152,7 +148,7 @@ var ff_templates = {
                 <span class="hint-link hint-default"><i class="sprite-carousel"></i>Carousel</span>\
                 <div class="hint hint-layout">\
                     <h1>PREMIUM FEATURE</h1>\
-                    To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.\
+                    To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.\
                 </div>\
             </div><br><span class="desc">Slide photos in beautiful carousel of posts. All cards are same size. Supports dragging.</span></label>\
         </div>\
@@ -335,11 +331,10 @@ var ff_templates = {
             <dd>\
                 <input data-prop="backgroundColor" id="bg-color-<%= id %>" data-color-format="rgba" name="stream-<%= id %>-bgcolor" type="text" value="rgb(240, 240, 240)" tabindex="-1">\
                 </dd>\
-                <dt class="multiline carousel-hidden-field"><span class="ff-icon-lock"></span> SORTING AND SEARCH BAR\
-                <p class="desc">Available only in grid layouts.</p>\
-                <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+                <dt class="multiline carousel-hidden-field">SORTING AND SEARCH BAR\
+                <p class="desc">Available only for grid layouts.</p>\
                 </dt>\
-                <dd class="carousel-hidden-field ff-feature">\
+                <dd class="carousel-hidden-field">\
                     <label for="stream-<%= id %>-filter"><input id="stream-<%= id %>-filter" class="switcher" type="checkbox" name="stream-<%= id %>-filter" checked value="yep"/><div><div></div></div></label>\
                 </dd>\
                 <dt class="carousel-hidden-field">Filters and controls color\
@@ -419,6 +414,16 @@ var ff_templates = {
             </select>\
         </div>\
     </dd>\
+    <dt class="grid-setting"><span class="valign">Icon color</span></dt>\
+    <dd class="grid-setting">\
+        <div class="select-wrapper">\
+            <select name="stream-<%= id %>-icon-col" id="stream-<%= id %>-icon-col">\
+                <option value="colored" selected>Colored</option>\
+                <option value="light">Light B&W</option>\
+                <option value="dark">Dark B&W</option>\
+            </select>\
+        </div>\
+    </dd>\
     <dt><span class="valign">Card background color</span></dt>\
     <dd>\
         <input data-prop="backgroundColor" id="card-color-<%= id %>" data-color-format="rgba" name="stream-<%= id %>-cardcolor" type="text" value="rgb(255,255,255)" tabindex="-1">\
@@ -485,7 +490,7 @@ var ff_templates = {
                             <div data-template="meta" class="ff-item-meta ff-item__draggable">\
                                 <span class="ff-userpic" style="background:url(<%= plugin_url %>/assets/alex_strohl_user.jpg)"><i data-preview="border-color" class="ff-icon"><i class="ff-icon-inner"></i></i></span><h6><a data-preview="name-color" target="_blank" rel="nofollow" href="#" class="ff-name">Alex Strohl</a></h6><a data-preview="other-color" target="_blank" rel="nofollow" href="#" class="ff-nickname">@alex_strohl</a><a data-preview="other-color" target="_blank" rel="nofollow" href="#" class="ff-timestamp">21m ago </a><div class="ff-dropdown list-preview"><a rel="nofollow" href="#" class="ff-external-link" target="_blank"></a><span class="flaticon-share2"></span></div>\
                             </div>\
-                            <h6 class="ff-item-bar"><a data-preview="other-color" href="#" class="ff-likes" target="_blank"><i class="ff-icon-like"></i> <span>89K</span></a><a data-preview="other-color" href="#" class="ff-comments" target="_blank"><i class="ff-icon-comment"></i> <span>994</span></a><div class="ff-share-wrapper"><i data-preview="other-color" class="ff-icon-share"></i><div class="ff-share-popup"><a href="http://www.facebook.com/sharer.php?u=https%3A%2F%2Fwww.instagram.com%2Fp%2FBLAaLZjBRg8%2F" class="ff-fb-share" target="_blank"><span>Facebook</span></a><a href="https://twitter.com/share?url=https%3A%2F%2Fwww.instagram.com%2Fp%2FBLAaLZjBRg8%2F" class="ff-tw-share" target="_blank"><span>Twitter</span></a><a href="https://plus.google.com/share?url=https%3A%2F%2Fwww.instagram.com%2Fp%2FBLAaLZjBRg8%2F" class="ff-gp-share" target="_blank"><span>Google+</span></a><a href="https://www.pinterest.com/pin/create/button/?url=https%3A%2F%2Fwww.instagram.com%2Fp%2FBLAaLZjBRg8%2F&amp;media=https%3A%2F%2Fscontent.cdninstagram.com%2Ft51.2885-15%2Fsh0.08%2Fe35%2Fp640x640%2F14482046_188451531582331_7449129988999086080_n.jpg%3Fig_cache_key%3DMTM1MTE5NTAyMDc2NTc2MzY0NA%253D%253D.2" class="ff-pin-share" target="_blank"><span>Pinterest</span></a></div></div></h6>\
+                            <h6 class="ff-item-bar"><a data-preview="other-color" href="#" class="ff-likes" target="_blank"><i class="ff-icon-like"></i> <span>89K</span></a><a data-preview="other-color" href="#" class="ff-comments" target="_blank"><i class="ff-icon-comment"></i> <span>994</span></a><div class="ff-share-wrapper"><i data-preview="other-color" class="ff-icon-share"></i><div class="ff-share-popup"><a href="http://www.facebook.com/sharer.php?u=https%3A%2F%2Fwww.instagram.com%2Fp%2FBLAaLZjBRg8%2F" class="ff-fb-share" target="_blank"><span>Facebook</span></a><a href="https://twitter.com/share?url=https%3A%2F%2Fwww.instagram.com%2Fp%2FBLAaLZjBRg8%2F" class="ff-tw-share" target="_blank"><span>X (Twitter)</span></a><a href="https://plus.google.com/share?url=https%3A%2F%2Fwww.instagram.com%2Fp%2FBLAaLZjBRg8%2F" class="ff-gp-share" target="_blank"><span>Google+</span></a><a href="https://www.pinterest.com/pin/create/button/?url=https%3A%2F%2Fwww.instagram.com%2Fp%2FBLAaLZjBRg8%2F&amp;media=https%3A%2F%2Fscontent.cdninstagram.com%2Ft51.2885-15%2Fsh0.08%2Fe35%2Fp640x640%2F14482046_188451531582331_7449129988999086080_n.jpg%3Fig_cache_key%3DMTM1MTE5NTAyMDc2NTc2MzY0NA%253D%253D.2" class="ff-pin-share" target="_blank"><span>Pinterest</span></a></div></div></h6>\
                         </div>\
                     </div>\
                 </div>\
@@ -502,6 +507,19 @@ var ff_templates = {
                 Prefix your selectors with <strong>#ff-stream-<%= id %></strong> to target this specific stream.\
                 </p>\
                 <textarea  name="stream-<%= id %>-css" cols="100" rows="10" id="stream-<%= id %>-css"/> </textarea>\
+                <div class="ff-ai-css-generator" style="margin: 20px 0; padding: 15px; background: rgba(107, 70, 193, 0.05); border: 1px dashed rgba(107, 70, 193, 0.25); border-radius: 8px;">\
+                    <h3 style="margin: 0 0 10px 0; font-size: 15px; font-weight: 600; color: #553c9a; display: flex; align-items: center; gap: 6px;">\
+                        <span>✨</span> WP AI CSS Generator\
+                    </h3>\
+                    <p class="desc" style="margin-bottom: 10px; font-size: 12px;">Describe what changes you want to achieve (e.g., "hide author avatars and make titles red"), and the AI will generate the CSS code for you.</p>\
+                    <div style="display: flex; gap: 8px;">\
+                        <input type="text" id="stream-<%= id %>-ai-prompt" placeholder="e.g. Make card background transparent and add soft shadow" style="flex: 1; padding: 8px 12px; border: 1px solid #dcdcdc; border-radius: 4px; font-size: 13px;" />\
+                        <button type="button" id="stream-<%= id %>-ai-generate" class="admin-button purple-button" style="margin: 0; padding: 8px 16px; height: auto; line-height: 1;">\
+                            <span class="ff-ai-spinner" style="display: none; margin-right: 5px;">⏳</span> Generate\
+                        </button>\
+                    </div>\
+                    <div id="stream-<%= id %>-ai-status" style="margin-top: 8px; font-size: 12px; font-weight: 500; display: none;"></div>\
+                </div>\
             <p style="margin-top:10px"><span id="stream-css-sbmt-<%= id %>" class="admin-button green-button submit-button">Save Changes</span><p>\
             </div>\
             <div class="section shortcode-section" data-tab="shortcode" id="shortcode-<%= id %>">\
@@ -528,13 +546,13 @@ var ff_templates = {
     <h1>USEFUL LINKS</h1>\
     <a href="http://go.social-streams.com/help">Help Center</a><br>\
     <a href="https://social-streams.com/">Social Stream Apps</a><br>\
-    <a href="/wp-content/plugins/flow-flow/flow-flow-debug.log" target="_blank">Debug Log</a>  & <a href="#" class="show-debug">Server Specs</a><br>\
+    <a href="<%= plugin_url %>/flow-flow-debug.log" target="_blank">Debug Log</a>  & <a href="#" class="show-debug">Server Specs</a><br>\
     <a href="https://forms.gle/G7Bq5GPCBoeBFR8z7">Feedback</a>\
     </div>\
     </div>\
     </div>\
     </div>',
-    twitterView:    '\
+    twitterView: '\
 <div class="feed-view" data-feed-type="twitter" data-uid="<%= uid %>">\
 <h1>Twitter feed settings</h1>\
 <dl class="section-settings">\
@@ -548,8 +566,6 @@ var ff_templates = {
 <label for="<%= uid %>-search-timeline-type">Tweets by search</label><br><br>\
 <input id="<%= uid %>-list-timeline-type" type="radio" name="<%= uid %>-timeline-type" value="list_timeline"/>\
 <label for="<%= uid %>-list-timeline-type">User list</label><br><br>\
-<input id="<%= uid %>-list-timeline-type" type="radio" name="<%= uid %>-timeline-type" value="collection_timeline"/>\
-<label for="<%= uid %>-list-timeline-type">Tweets collection</label><br><br>\
 <input id="<%= uid %>-fav-timeline-type" type="radio" name="<%= uid %>-timeline-type" value="favorites"/>\
 <label for="<%= uid %>-fav-timeline-type">User\'s likes</label><br><br>\
 </dd>\
@@ -566,7 +582,6 @@ Content to show\
             <li><b>User feed</b> — enter username of any public Twitter account.</li>\
             <li><b>Tweets by search</b> — enter any word or #hashtag. <a href="https://developer.twitter.com/en/docs/api-reference-index" target="_blank">Advanced search terms</a>.</li>\
             <li><b>User list</b> — enter username here and List name in corresponding field below.</li>\
-            <li><b>Tweets collection</b> — enter collection ID (numeric part in collection URL).</li>\
             <li><b>User’s likes</b> —  enter username.</li>\
         </ul>\
     </div>\
@@ -667,14 +682,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+ <dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -685,7 +707,7 @@ Posts to load during update\
 <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
 ',
-    facebookView:   '\
+    facebookView: '\
 <div class="feed-view"  data-feed-type="facebook" data-uid="<%= uid %>">\
 <h1>Facebook feed settings</h1>\
 <dl class="section-settings">\
@@ -693,8 +715,8 @@ Posts to load during update\
 <dd>\
 <input id="<%= uid %>-page-timeline-type" type="radio" name="<%= uid %>-timeline-type" value="page_timeline" checked />\
 <label for="<%= uid %>-page-timeline-type">Page</label><br><br>\
-<input class="" id="<%= uid %>-group-timeline-type" type="radio" name="<%= uid %>-timeline-type" value="feed" />\
-<label class="" for="<%= uid %>-group-timeline-type">Page with restrictions</label><br><br>\
+ <input class="ff-hide" id="<%= uid %>-mentions-timeline-type" type="radio" name="<%= uid %>-timeline-type" value="mentions" />\
+<label class="ff-hide" for="<%= uid %>-mentions-timeline-type">Tagged in</label>\
 <input id="<%= uid %>-album-timeline-type" type="radio" name="<%= uid %>-timeline-type" value="album" />\
 <label for="<%= uid %>-album-timeline-type">Album</label>\
 </dd>\
@@ -708,10 +730,9 @@ Content to show\
         <h1>Content to show</h1>\
         <ul>\
             <li><b>Page</b> — enter nickname of any public page or Page ID.</li>\
-            <li><b>Page with restrictions</b> — nickname or ID, try if you have errors with feed above.</li>\
             <li><b>Album</b> — enter Album ID. <a href="http://docs.social-streams.com/article/50-find-facebook-album-id" target="_blank">What is it?</a> </li>\
         </ul><br>\
-        Use <a href="http://lookup-id.com" target="_blank">Find my Facebook ID</a> tool to find your Page ID or Group ID.\
+        Use <a href="https://findfb.id/" target="_blank">Find my Facebook ID</a> tool to find your Page ID or Group ID.\
     </div>\
 </div>\
 </dt>\
@@ -726,14 +747,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -744,7 +772,7 @@ Posts to load during update\
 <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
                     </div>\
 ',
-    vimeoView:      '\
+    vimeoView: '\
 <div class="feed-view"  data-feed-type="vimeo" data-uid="<%= uid %>">\
 <h1>Vimeo feed settings</h1>\
 <dl class="section-settings">\
@@ -783,14 +811,21 @@ Posts to load during update\
 <dt>Feed updates frequency</dt>\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-cache_lifetime" id="<%= uid %>-cache_lifetime"><option value="60">Every hour</option> <option value="120">Every 2 hours</option> <option value="360">Every 6 hours</option> <option value="1440" selected>Once a day</option> <option value="10080">Once a week</option></select> </div></dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -801,7 +836,7 @@ Posts to load during update\
 <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
 ',
-    googleView:     '\
+    googleView: '\
 <div class="feed-view" data-feed-type="google" data-uid="<%= uid %>">\
   <h1>Google+ feed settings</h1>\
   <dl class="section-settings">\
@@ -828,14 +863,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -848,7 +890,7 @@ Posts to load during update\
   <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
 ',
-    rssView:        '\
+    rssView: '\
   <div class="feed-view"  data-feed-type="rss" data-uid="<%= uid %>">\
       <h1>RSS feed settings</h1>\
       <dl class="section-settings">\
@@ -870,14 +912,21 @@ Posts to load during update\
           <dt>Feed updates frequency</dt>\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-cache_lifetime" id="<%= uid %>-cache_lifetime"><option value="60">Every hour</option> <option value="120">Every 2 hours</option> <option value="360">Every 6 hours</option> <option value="1440" selected>Once a day</option> <option value="10080">Once a week</option></select> </div></dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -888,7 +937,7 @@ Posts to load during update\
       <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
   </div>\
 ',
-    pinterestView:  '\
+    pinterestView: '\
   <div class="feed-view" data-feed-type="pinterest" data-uid="<%= uid %>">\
       <h1>Pinterest feed settings</h1>\
       <dl class="section-settings">\
@@ -910,14 +959,21 @@ Posts to load during update\
               <dt>Feed updates frequency</dt>\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-cache_lifetime" id="<%= uid %>-cache_lifetime"><option value="60">Every hour</option> <option value="120">Every 2 hours</option> <option value="360">Every 6 hours</option> <option value="1440" selected>Once a day</option> <option value="10080">Once a week</option></select> </div></dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -928,20 +984,18 @@ Posts to load during update\
       <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
   </div>\
                       ',
-    instagramView:  '\
+    instagramView: '\
   <div class="feed-view" data-feed-type="instagram" data-uid="<%= uid %>">\
       <h1>Instagram feed settings</h1>\
       <dl class="section-settings">\
           <dt>FEED TYPE</dt>\
           <dd>\
           <input id="<%= uid %>-user-timeline-type" checked type="radio" name="<%= uid %>-timeline-type" value="user_timeline"/>\
-            <label for="<%= uid %>-user-timeline-type">User feed</label>\
-          <input class="ff-hide" id="<%= uid %>-likes-type"  type="radio" name="<%= uid %>-timeline-type" value="likes"/>\
-            <label class="ff-hide" for="<%= uid %>-likes-type">User\'s likes</label><br><br>\
+            <label for="<%= uid %>-user-timeline-type">User feed</label><br><br>\
+          <input class="hide" id="<%= uid %>-likes-type"  type="radio" name="<%= uid %>-timeline-type" value="tagged_in"/>\
+            <label class="hide" for="<%= uid %>-likes-type">Tagged In</label>\
           <input id="<%= uid %>-search-timeline-type" type="radio" name="<%= uid %>-timeline-type" value="tag"/>\
-            <label for="<%= uid %>-search-timeline-type">Hashtag</label>\
-          <input  class="ff-hide" id="<%= uid %>-location-type" type="radio" name="<%= uid %>-timeline-type" value="location"/>\
-            <label  class="ff-hide" for="<%= uid %>-location-type">Location (only Open API)</label><br><br>\
+            <label for="<%= uid %>-search-timeline-type">Hashtag</label><br><br>\
           </dd>\
           <dt>\
             Content to show\
@@ -952,10 +1006,9 @@ Posts to load during update\
                 <div class="hint hint-pro">\
                     <h1>Content to show</h1>\
                     <ul>\
-                        <li><b>User feed</b> — enter nickname of any business Instagram account (Official API) or any public account (Open API).</li>\
-                        <li class="ff-hide"><b>User\'s likes</b> — enter nickname of your own account.</li>\
+                        <li><b>User feed</b> — enter nickname of any Business/Creator Instagram account (Official API) or any public account (only <a href="#addons-tab">Boost</a>).</li>\
+                        <li class=""><b>Tagged in</b> — enter nickname of Business/Creator you own.</li>\
                         <li><b>Hashtag</b> — enter a hashtag.</li>\
-                        <li class="ff-hide"><b>Location</b> — enter <a href="http://docs.social-streams.com/article/118-find-instagram-location-id" target="_blank">Location ID</a>.</li>\
                     </ul>\
                 </div>\
             </div>\
@@ -963,7 +1016,14 @@ Posts to load during update\
           <dd>\
               <input type="text" name="<%= uid %>-content"/>\
                       </dd>\
-          <dt class="ff-hide"><span class="ff-icon-lock"></span> API METHODS\
+          <dt class="hashtag-type-selector" style="display:none">Hashtag type</dt>\
+          <dd class="hashtag-type-selector" style="display:none">\
+          <input id="<%= uid %>-hashtag-recent" checked type="radio" name="<%= uid %>-hashtag-type" value="recent"/>\
+            <label for="<%= uid %>-hashtag-recent">Recent</label><br><br>\
+          <input id="<%= uid %>-hashtag-top" type="radio" name="<%= uid %>-hashtag-type" value="top"/>\
+            <label for="<%= uid %>-hashtag-top">Top</label>\
+          </dd>\
+          <dt class="ff-hide">API METHODS\
           <div class="desc hint-block">\
                 <span class="hint-link">\
                     <img src="<%= plugin_url %>/assets/info_icon.svg">\
@@ -976,43 +1036,99 @@ Posts to load during update\
                     </ul>\
                 </div>\
             </div>\
-             <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
           </dt>\
-          <dd class="ff-feature ff-hide" style="margin-top: 8px">\
-          <input id="<%= uid %>-api-official2" type="radio" name="<%= uid %>-api-type" value="official2"/>\
+          <dd class="ff-hide" style="margin-top: 8px">\
+          <input id="<%= uid %>-api-official2" checked type="radio" name="<%= uid %>-api-type" value="official2"/>\
             <label for="<%= uid %>-api-official2">Official API</label><br><br>\
-          <input id="<%= uid %>-api-official" checked type="radio" name="<%= uid %>-api-type" value="official2"/>\
+          <input id="<%= uid %>-api-official" type="radio" name="<%= uid %>-api-type" value="official"/>\
             <label for="<%= uid %>-api-official">Open API</label><br><br>\
           </dd>\
                       <dt>Feed updates frequency</dt>\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-cache_lifetime" id="<%= uid %>-cache_lifetime"><option value="60">Every hour</option> <option value="120">Every 2 hours</option> <option value="360">Every 6 hours</option> <option value="1440" selected>Once a day</option></select> </div></dd>\
-<dt class="ff-hide" >\
+<dt class="" >\
     Posts to load during update\
     <p class="desc">The first load is always 30. <a href="http://docs.social-streams.com/article/137-managing-feed-updates" target="_blank">Learn more</a>.</p>\
 </dt>\
-<dd class="ff-hide" >\
+<dd class="" >\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
-</dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
-</dt>\
-<dd class="ff-feature">\
-<label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
-</dd>\
-<dt class="multiline">\
-    <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
-    <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
-</dt>\
-<dd>\
-<label for="<%= uid %>-boosted" class="boosted-switcher"><input id="<%= uid %>-boosted" class="switcher" type="checkbox" name="<%= uid %>-boosted" value="yep"/> <div><div></div></div></label>\
-</dd>\
-  </dl>\
-  <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
-</div>\
-                                                      ',
-    wordpressView:  '\
+    </dd>\
+    <dt>\
+        MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+        <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+    </dt>\
+    <dd class="ff-feature">\
+    <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
+    </dd>\
+    <dt>\
+        Auto approve posts <span class="ff-icon-lock"></span>\
+        <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+    </dt>\
+    <dd class="ff-feature">\
+    <label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+    </dd>\
+    <dt>\
+        <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
+        <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
+    </dt>\
+    <dd>\
+    <label for="<%= uid %>-boosted" class="boosted-switcher"><input id="<%= uid %>-boosted" class="switcher" type="checkbox" name="<%= uid %>-boosted" value="yep"/> <div><div></div></div></label>\
+    </dd>\
+      </dl>\
+      <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
+  </div>\
+                      ',
+    tiktokView: '\
+  <div class="feed-view" data-feed-type="tiktok" data-uid="<%= uid %>">\
+      <h1>TikTok feed settings</h1>\
+      <dl class="section-settings">\
+          <dt>About this feed</dt>\
+          <dd>\
+              <p class="desc">This feed uses your global TikTok connection from Settings. No per-feed token is required.</p>\
+              <p class="desc tk-token-notice" style="display:none; color:#d63638">No global TikTok access token found. Go to Settings → TikTok integration and click Connect.</p>\
+          </dd>\
+          <dt>Connected account</dt>\
+          <dd>\
+              <p class="desc">Latest videos of <b>@<span class="tk-username">connected_account</span></b> (connected in Auth). You cannot change the account here.</p>\
+              <input type="hidden" id="<%= uid %>-content" name="<%= uid %>-content" value="">\
+              <input type="hidden" id="<%= uid %>-label" name="<%= uid %>-label" value="TikTok">\
+          </dd>\
+          <dt>Feed updates frequency</dt>\
+          <dd>\
+              <div class="select-wrapper"> <select name="<%= uid %>-cache_lifetime" id="<%= uid %>-cache_lifetime"><option value="60">Every hour</option> <option value="120">Every 2 hours</option> <option value="360" selected>Every 6 hours</option></select> </div>\
+          </dd>\
+          <dt>Posts to load during update\
+          <p class="desc">The first load is always 30. <a href="http://docs.social-streams.com/article/137-managing-feed-updates" target="_blank">Learn more</a>.</p>\
+          </dt>\
+          <dd>\
+              <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
+          </dd>\
+          <dt>\
+              MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+              <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+          </dt>\
+          <dd class="ff-feature">\
+              <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
+          </dd>\
+          <dt>\
+              Auto approve posts <span class="ff-icon-lock"></span>\
+              <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+          </dt>\
+          <dd class="ff-feature">\
+              <label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+          </dd>\
+          <dt>\
+              <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
+              <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
+          </dt>\
+          <dd>\
+              <label for="<%= uid %>-boosted" class="boosted-switcher"><input id="<%= uid %>-boosted" class="switcher" type="checkbox" name="<%= uid %>-boosted" value="yep"/> <div><div></div></div></label>\
+          </dd>\
+      </dl>\
+      <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
+  </div>\
+                      ',
+    wordpressView: '\
 <div class="feed-view" data-feed-type="wordpress" data-uid="<%= uid %>">\
   <h1>WordPress feed settings</h1>\
   <dl class="section-settings">\
@@ -1072,25 +1188,32 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
 </dd>\
 <dt class="ff-hide">\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
-<ddt class="ff-hide">\
+<dd class="ff-hide">\
 <label for="<%= uid %>-boosted" class="boosted-switcher"><input id="<%= uid %>-boosted" class="switcher" type="checkbox" name="<%= uid %>-boosted" value="yep"/> <div><div></div></div></label>\
 </dd>\
  </dl>\
 <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
               ',
-    youtubeView:    '\
+    youtubeView: '\
   <div class="feed-view" data-feed-type="youtube" data-uid="<%= uid %>">\
       <h1>YouTube feed settings</h1>\
       <dl class="section-settings">\
@@ -1114,7 +1237,7 @@ Posts to load during update\
                             <div class="hint hint-pro">\
                                 <h1>Content to show</h1>\
                                 <ul>\
-                                    <li><b>User feed</b> — enter YouTube username with public access.</li>\
+                                    <li><b>User feed</b> — enter @handle (e.g. @GoogleDevelopers), channel ID (starts with UC), or legacy username.</li>\
                                     <li><b>Channel</b> — enter channel ID. <a href="https://support.google.com/youtube/answer/3250431?hl=en" target="_blank">What is it?</a></li>\
                                     <li><b>Playlist</b> — enter playlist ID. <a href="http://docs.social-streams.com/article/139-find-youtube-playlist-id" target="_blank">What is it?</a></li>\
                                     <li><b>Search</b> — enter any search query.</li>\
@@ -1139,14 +1262,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -1157,7 +1287,7 @@ Posts to load during update\
 <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
       ',
-    vineView:       '\
+    vineView: '\
 <div class="feed-view" data-feed-type="vine" data-uid="<%= uid %>">\
 <h1>Vine feed settings</h1>\
 <dl class="section-settings">\
@@ -1189,14 +1319,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -1207,7 +1344,7 @@ Posts to load during update\
  <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
      ',
-    dribbbleView:   '\
+    dribbbleView: '\
      <div class="feed-view" data-feed-type="dribbble" data-uid="<%= uid %>">\
          <h1>Dribbble feed settings</h1>\
      <dl class="section-settings">\
@@ -1233,14 +1370,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -1279,14 +1423,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -1297,7 +1448,7 @@ Posts to load during update\
  <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
                                                                                                                  ',
-    flickrView:     '\
+    flickrView: '\
      <div class="feed-view" data-feed-type="flickr" data-uid="<%= uid %>">\
          <h1>Flickr feed settings</h1>\
          <dl class="section-settings">\
@@ -1327,14 +1478,21 @@ Posts to load during update\
                  <dt>Feed updates frequency</dt>\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-cache_lifetime" id="<%= uid %>-cache_lifetime"><option value="60">Every hour</option> <option value="120">Every 2 hours</option> <option value="360">Every 6 hours</option> <option value="1440" selected>Once a day</option> <option value="10080">Once a week</option></select> </div></dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -1345,7 +1503,7 @@ Posts to load during update\
      <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
  </div>\
                                                                                                                              ',
-tumblrView:     '\
+    tumblrView: '\
      <div class="feed-view" data-feed-type="tumblr" data-uid="<%= uid %>">\
          <h1>Tumblr feed settings</h1>\
          <dl class="section-settings">\
@@ -1376,14 +1534,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -1394,24 +1559,26 @@ Posts to load during update\
  <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
  ',
-linkedinView:   '\
+    linkedinView: '\
      <div class="feed-view" data-feed-type="linkedin" data-uid="<%= uid %>">\
          <h1>LinkedIn feed settings</h1>\
          <dl class="section-settings">\
-             <dt class="">\
-                COMPANY PAGE ID\
-                <p class="desc"><a href="http://docs.social-streams.com/article/51-find-linkedin-id" target="_blank">What is it?</a></p>\
-            </dt>\
-             <dd class=""><input type="text" name="<%= uid %>-content"/></dd>\
-             <dt>Event type</dt>\
+             <dt>About this feed</dt>\
              <dd>\
-                 <input id="<%= uid %>-status-update" type="radio" name="<%= uid %>-event-type" value="status-update"/> <label for="<%= uid %>-status-update">Updates of company</label><br/><br/>\
-                 <input id="<%= uid %>-job-posting" type="radio" name="<%= uid %>-event-type" value="job-posting"/> <label for="<%= uid %>-job-posting">Job offers (BETA)</label><br><br/>\
-                 <input id="<%= uid %>-any" type="radio" name="<%= uid %>-event-type" checked checked value="any"/> <label for="<%= uid %>-any">Any</label>\
+                 <p class="desc">This feed uses your global LinkedIn connection from Settings. No per-feed token is required.</p>\
+                 <p class="desc li-token-notice" style="display:none; color:#d63638">No global LinkedIn access token found. Go to Settings → LinkedIn integration and click Connect.</p>\
+             </dd>\
+             <dt>Connected company</dt>\
+             <dd>\
+                 <p class="desc li-org-name-text">Posts from <b><span class="li-org-name">connected_company</span></b> (connected in Auth). You cannot change the company here.</p>\
+                 <div class="select-wrapper li-org-select-wrapper" style="display:none;">\
+                     <select class="li-org-select" name="<%= uid %>-content"></select>\
+                 </div>\
+                 <input type="hidden" id="<%= uid %>-label" name="<%= uid %>-label" value="LinkedIn">\
              </dd>\
              <dt>Feed updates frequency</dt>\
 <dd>\
-<div class="select-wrapper"> <select name="<%= uid %>-cache_lifetime" id="<%= uid %>cache_lifetime"><option value="60">Every hour</option> <option value="120">Every 2 hours</option> <option value="360">Every 6 hours</option> <option value="1440" selected>Once a day</option> <option value="10080">Once a week</option></select> </div></dd>\
+<div class="select-wrapper"> <select name="<%= uid %>-cache_lifetime" id="<%= uid %>-cache_lifetime"><option value="1440" selected>Once a day</option> <option value="10080">Once a week</option></select> </div></dd>\
 <dt>\
 Posts to load during update\
 <p class="desc">The first load is always 30. <a href="http://docs.social-streams.com/article/137-managing-feed-updates" target="_blank">Learn more</a>.</p>\
@@ -1419,14 +1586,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -1437,7 +1611,7 @@ Posts to load during update\
  <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
      ',
-soundcloudView: '\
+    soundcloudView: '\
          <div class="feed-view" data-feed-type="soundcloud" data-uid="<%= uid %>">\
              <h1>SoundCloud feed settings</h1>\
              <dl class="section-settings">\
@@ -1461,14 +1635,21 @@ Posts to load during update\
 <dd>\
 <div class="select-wrapper"> <select name="<%= uid %>-posts" id="<%= uid %>-post"><option value="1">1 post</option><option value="5">5 posts</option><option selected value="10">10 posts</option><option value="20">20 posts</option></select></div>\
 </dd>\
-<dt class="multiline">\
-    <span class="ff-icon-lock"></span> MODERATE THIS FEED\
-    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br> Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
+<dt>\
+    MODERATE THIS FEED <span class="ff-icon-lock"></span>\
+    <p class="desc"><a href="https://docs.social-streams.com/article/70-manual-premoderation" target="_blank">Learn more</a></p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
 </dt>\
 <dd class="ff-feature">\
 <label for="<%= uid %>-mod"><input id="<%= uid %>-mod" class="switcher" type="checkbox" name="<%= uid %>-mod" value="yep"/> <div><div></div></div></label>\
 </dd>\
-<dt class="multiline">\
+<dt>\
+    Auto approve posts <span class="ff-icon-lock"></span>\
+    <p class="desc">When moderation is enabled</p><div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>\
+</dt>\
+<dd class="ff-feature">\
+<label for="<%= uid %>-mod-approve"><input id="<%= uid %>-mod-approve" class="switcher" type="checkbox" name="<%= uid %>-mod-approve" value="yep"/> <div><div></div></div></label>\
+</dd>\
+<dt>\
     <span class="highlight hilite-boost"><i class="flaticon-rocket"></i></span> Boost this  Feed\
     <p class="desc"><a href="https://social-streams.com/boosts/" target="_blank">What is our boost cloud service?</a></p>\
 </dt>\
@@ -1479,30 +1660,26 @@ Posts to load during update\
  <input type="hidden" id="<%= uid %>-enabled" value="yep" checked type="checkbox" name="<%= uid %>-enabled">\
 </div>\
      ',
-filterView:     '\
+    filterView: '\
          <div class="feed-view filter-feed" data-filter-uid="<%= uid %>">\
              <h1>Filter Feed Content</h1>\
              <dl class="section-settings">\
-                <dt class=""><span class="ff-icon-lock"></span> Exclude all <p class="desc">Enter term and hit Enter to add</p>\
-                                            <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
-                </dt>\
-                <dd class="ff-feature">\
+                <dt class="">Exclude all <p class="desc">Enter term and hit Enter to add</p></dt>\
+                <dd class="">\
                     <input type="hidden" data-type="filter-exclude-holder" name="<%= uid %>-filter-by-words"/>\
                     <input type="text" data-action="add-filter" data-id="<%= uid %>" data-type="exclude" placeholder="Type and hit Enter"/>\
                     <ul class="filter-labels" data-type="exclude"></ul>\
                 </dd>\
              </dl>\
              <dl class="section-settings">\
-                <dt class=""><span class="ff-icon-lock"></span> Include all <p class="desc">Enter term and hit Enter to add</p>\
-                 <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features <span class="tip-regular-stream">for non-cloud streams</span> please <span class="tip-cloud-stream">activate <a href="#addons-tab">BOOST subscription</a> or</span> make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>. <span class="tip-regular-stream">Features are already unlocked for cloud streams.</span><br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>\
-</dt>\
-                <dd class="ff-feature">\
+                <dt class="">Include all <p class="desc">Enter term and hit Enter to add</p></dt>\
+                <dd class="">\
                     <input type="hidden" data-type="filter-include-holder" name="<%= uid %>-include"/>\
                     <input type="text" data-action="add-filter" data-id="<%= uid %>" data-type="include" placeholder="Type and hit Enter"/>\
                     <ul class="filter-labels" data-type="include"></ul>\
                 </dd>\
              </dl>\
-             <div class="hint-block hint-block-filter">\
+             <div class="hint-block">\
                  <a class="hint-link" href="#" data-action="hint-toggle">How to Filter</a>\
                  <div class="hint">\
                     <h1>Hints on Filtering</h1>\
@@ -1524,31 +1701,31 @@ filterView:     '\
                 </div>\
             </div>\
      </div>',
-	
-	pricing_table_item: '<li class="pricing-table__item pricing-table__placeholder" data-plan="" data-id="">\n' +
-		               '                <div class="pricing-table__content">\n' +
-		               '                    <h2></h2>\n' +
-		               '                    <h3>$<span class="pricing-table__item_price">--.--</span><span class="pricing-table__item_price_per"> /mo</span></h3>\n' +
-		               '                    <ul>\n' +
-		               '\n' +
-		               '                    </ul>\n' +
-		               '                    <div class="pricing-table__btn"><a href="https://social-streams.com/boosts/" class="extension__cta green-button extension__cta--secured">Go to payment</a><a href="/wp-admin/admin-ajax.php?action=flow_flow_cancel_subscription" class="extension__cta grey-button">Cancel plan</a><br><span style="color:#999"><i class="flaticon-lock"></i> Secured page</span></div>\n' +
-		               '                </div>\n' +
-		               '                <div class="pricing-table__placeholder-content">\n' +
-		               '                    <h2></h2>\n' +
-		               '                    <div class="placeholder__space placeholder__space_20"></div>\n' +
-		               '                    <h3></h3>\n' +
-		               '                    <div class="placeholder__space placeholder__space_20"></div>\n' +
-		               '                    <div class="placeholder__list">\n' +
-		               '                        <div></div>\n' +
-		               '                        <div class="placeholder__space placeholder__space_15"></div>\n' +
-		               '                        <div></div>\n' +
-		               '                        <div class="placeholder__space placeholder__space_15"></div>\n' +
-		               '                        <div></div>\n' +
-		               '                    </div>\n' +
-		               '                    <div class="pricing-table__btn"><a href="https://social-streams.com/boosts/" class="extension__cta green-button extension__cta--secured">Go to payment</a><a href="/wp-admin/admin-ajax.php?action=flow_flow_cancel_subscription" class="extension__cta grey-button">Cancel plan</a><br><span style="color:#999"><i class="flaticon-lock"></i> Secured page</span></div>\n' +
-		               '                </div>\n' +
-		               '            </li>'
+
+    pricing_table_item: '<li class="pricing-table__item pricing-table__placeholder" data-plan="" data-id="">\n' +
+        '                <div class="pricing-table__content">\n' +
+        '                    <h2></h2>\n' +
+        '                    <h3>$<span class="pricing-table__item_price">--.--</span><span class="pricing-table__item_price_per"> /mo</span></h3>\n' +
+        '                    <ul>\n' +
+        '\n' +
+        '                    </ul>\n' +
+        '                    <div class="pricing-table__btn"><a href="https://social-streams.com/boosts/" class="extension__cta green-button extension__cta--secured">Start free trial</a><a href="/wp-admin/admin-ajax.php?action=flow_flow_cancel_subscription" class="extension__cta grey-button">Cancel plan</a><br><span style="color:#999"><i class="flaticon-lock"></i> Secured page</span></div>\n' +
+        '                </div>\n' +
+        '                <div class="pricing-table__placeholder-content">\n' +
+        '                    <h2></h2>\n' +
+        '                    <div class="placeholder__space placeholder__space_20"></div>\n' +
+        '                    <h3></h3>\n' +
+        '                    <div class="placeholder__space placeholder__space_20"></div>\n' +
+        '                    <div class="placeholder__list">\n' +
+        '                        <div></div>\n' +
+        '                        <div class="placeholder__space placeholder__space_15"></div>\n' +
+        '                        <div></div>\n' +
+        '                        <div class="placeholder__space placeholder__space_15"></div>\n' +
+        '                        <div></div>\n' +
+        '                    </div>\n' +
+        '                    <div class="pricing-table__btn"><a href="https://social-streams.com/boosts/" class="extension__cta green-button extension__cta--secured">Start free trial</a><a href="/wp-admin/admin-ajax.php?action=flow_flow_cancel_subscription" class="extension__cta grey-button">Cancel plan</a><br><span style="color:#999"><i class="flaticon-lock"></i> Secured page</span></div>\n' +
+        '                </div>\n' +
+        '            </li>'
 }
 
 

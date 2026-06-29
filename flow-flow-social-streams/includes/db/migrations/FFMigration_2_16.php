@@ -1,5 +1,6 @@
 <?php namespace flow\db\migrations;
-use flow\db\FFDB;
+use Exception;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -20,39 +21,22 @@ class FFMigration_2_16 implements ILADBMigration{
 	}
 
 	public function execute($conn, $manager) {
-		$this->sources = array();
+		$this->sources = [];
 
-		$this->create_cache_table($manager->cache_table_name, $manager->posts_table_name, $manager->streams_sources_table_name);
+		$this->create_cache_table($conn, $manager->cache_table_name, $manager->posts_table_name, $manager->streams_sources_table_name);
 
-		if (!FFDB::existColumn($manager->cache_table_name, 'settings')){
-			$sql = "ALTER TABLE ?n ADD COLUMN ?n BLOB";
-			$conn->query($sql, $manager->cache_table_name, 'settings');
-		}
+		LADDLUtils::addColumnIfNotExist($conn, $manager->cache_table_name, 'settings', 'BLOB');
+		LADDLUtils::addColumnIfNotExist($conn, $manager->cache_table_name, 'enabled', 'TINYINT(1)');
+		LADDLUtils::addColumnIfNotExist($conn, $manager->cache_table_name, 'changed_time', 'INT DEFAULT 0');
+		LADDLUtils::addColumnIfNotExist($conn, $manager->cache_table_name, 'cache_lifetime', 'INT DEFAULT 60');
 
-		if (!FFDB::existColumn($manager->cache_table_name, 'enabled')){
-			$sql = "ALTER TABLE ?n ADD COLUMN ?n TINYINT(1)";
-			$conn->query($sql, $manager->cache_table_name, 'enabled');
-		}
+        if (LADDLUtils::existColumn($conn, $manager->cache_table_name, 'stream_id')){
+            LADDLUtils::dropColumn($conn, $manager->cache_table_name, 'stream_id');
+        }
 
-		if (!FFDB::existColumn($manager->cache_table_name, 'changed_time')){
-			$sql = "ALTER TABLE ?n ADD COLUMN ?n INT DEFAULT 0";
-			$conn->query($sql, $manager->cache_table_name, 'changed_time');
-		}
-
-		if (!FFDB::existColumn($manager->cache_table_name, 'cache_lifetime')){
-			$sql = "ALTER TABLE ?n ADD COLUMN ?n INT DEFAULT 60";
-			$conn->query($sql, $manager->cache_table_name, 'cache_lifetime');
-		}
-
-		if (FFDB::existColumn($manager->cache_table_name, 'stream_id')){
-			$sql = "ALTER TABLE ?n DROP `stream_id`";
-			$conn->query($sql, $manager->cache_table_name);
-		}
-
-		if (FFDB::existColumn($manager->posts_table_name, 'stream_id')){
-			$sql = "ALTER TABLE ?n DROP `stream_id`";
-			$conn->query($sql, $manager->posts_table_name);
-		}
+        if (LADDLUtils::existColumn($conn, $manager->posts_table_name, 'stream_id')){
+            LADDLUtils::dropColumn($conn, $manager->posts_table_name, 'stream_id');
+        }
 
 		$time = time();
 		$streams = $this->streams($conn, $manager->streams_table_name);
@@ -86,35 +70,34 @@ class FFMigration_2_16 implements ILADBMigration{
 					$feed->mod = $stream->moderation;
 				}
 				$f = serialize($feed);
-				$insert = array(
+				$insert = [
 					'last_update' => time(),
 					'settings' => $f,
 					'enabled' => true,
 					'changed_time' => $time,
 					'cache_lifetime' => $cache_lifetime
-				);
-				$update = array(
+                ];
+				$update = [
 					'settings' => $f,
 					'enabled' => true,
 					'changed_time' => $time,
 					'cache_lifetime' => $cache_lifetime
-				);
+                ];
 				if ( false === $conn->query( 'INSERT INTO ?n SET `feed_id`=?s, ?u ON DUPLICATE KEY UPDATE ?u',
 						$manager->cache_table_name, $feed->id, $insert, $update ) ) {
-					throw new \Exception();
+					throw new Exception();
 				}
 
 				if ( false === $conn->query( 'INSERT INTO ?n SET `feed_id`=?s, `stream_id`=?i',
 						$manager->streams_sources_table_name, $this->source($f, $feed->id), $stream->id) ) {
-					throw new \Exception();
+					throw new Exception();
 				}
 			}
 		}
 
-		if (FFDB::existColumn($manager->streams_table_name, 'feeds')){
-			$sql = "ALTER TABLE ?n DROP `feeds`";
-			$conn->query($sql, $manager->streams_table_name);
-		}
+        if (LADDLUtils::existColumn($conn, $manager->streams_table_name, 'feeds')){
+            LADDLUtils::dropColumn($conn, $manager->streams_table_name, 'feeds');
+        }
 	}
 
 	private function source($source, $id){
@@ -133,7 +116,7 @@ class FFMigration_2_16 implements ILADBMigration{
 				$table_name))){
 			return $result;
 		}
-		return array();
+		return [];
 	}
 
 	private function getStream($conn, $table_name, $id){
@@ -147,7 +130,7 @@ class FFMigration_2_16 implements ILADBMigration{
 		return null;
 	}
 	
-	private function create_cache_table ($cache_table, $posts_table, $streams2sources_table) {
+	private function create_cache_table($conn, $cache_table, $posts_table, $streams2sources_table) {
 		/*
 		 * We'll set the default character set and collation for this table.
 		 * If we don't do this, some characters could end up being converted
@@ -155,18 +138,18 @@ class FFMigration_2_16 implements ILADBMigration{
 		 */
 		$charset_collate = '';
 		
-		$charset = FFDB::charset();
+		$charset = LADDLUtils::charset();
 		if ( !empty( $charset ) ) {
 			$charset_collate = " CHARACTER SET {$charset}";
 			$charset = " CHARACTER SET {$charset}";
 		}
 		
-		$collate = FFDB::collate();
+		$collate = LADDLUtils::collate();
 		if ( !empty( $collate ) ) {
 			$charset_collate .= " COLLATE {$collate}";
 		}
 		
-		if(!FFDB::existTable($cache_table)){
+		if(!LADDLUtils::existTable($conn, $cache_table)){
 			$sql = "
 			CREATE TABLE `{$cache_table}`
 			(
@@ -181,10 +164,10 @@ class FFMigration_2_16 implements ILADBMigration{
 			`cache_lifetime` INT DEFAULT 60,
 			PRIMARY KEY (`feed_id`)
 			){$charset}";
-			FFDB::conn()->query($sql);
+			$conn->query($sql);
 		}
 		
-		if(!FFDB::existTable($streams2sources_table)){
+		if(!LADDLUtils::existTable($conn, $streams2sources_table)){
 			$sql = "
 			CREATE TABLE `{$streams2sources_table}`
 			(
@@ -192,10 +175,10 @@ class FFMigration_2_16 implements ILADBMigration{
 			`stream_id` INT NOT NULL,
 			PRIMARY KEY (`feed_id`, `stream_id`)
 			){$charset}";
-			FFDB::conn()->query($sql);
+            $conn->query($sql);
 		}
 		
-		if(!FFDB::existTable($posts_table)) {
+		if(!LADDLUtils::existTable($conn, $posts_table)) {
 			$sql = "
 			CREATE TABLE `{$posts_table}`
 			(
@@ -225,7 +208,7 @@ class FFMigration_2_16 implements ILADBMigration{
 			`media_type` VARCHAR(100),
 			PRIMARY KEY (`post_id`, `post_type`, `feed_id`)
 			){$charset}";
-			FFDB::conn()->query($sql);
+            $conn->query($sql);
 		}
 	}
 }

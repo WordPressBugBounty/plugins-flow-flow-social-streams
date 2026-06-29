@@ -1,5 +1,4 @@
 <?php namespace flow\db\migrations;
-use flow\db\FFDB;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -19,23 +18,23 @@ class FFMigration_2_15 implements ILADBMigration{
 	}
 
 	public function execute($conn, $manager) {
-		$streams = $this->streams($manager->streams_table_name);
+		$streams = $this->streams($conn, $manager->streams_table_name);
 		foreach ( $streams as $stream ) {
-			$stream = $this->getStream($manager->streams_table_name, $stream['id']);
+			$stream = $this->getStream($conn, $manager->streams_table_name, $stream['id']);
 			$manager->generateCss($stream);
 		}
 	}
 
-	private function streams($table_name){
-		if (false !== ($result = FFDB::conn()->getAll('SELECT `id`, `name`, `value` FROM ?n ORDER BY `id`',
+	private function streams($conn, $table_name){
+		if (false !== ($result = $conn->getAll('SELECT `id`, `name`, `value` FROM ?n ORDER BY `id`',
 				$table_name))){
 			return $result;
 		}
-		return array();
+		return [];
 	}
 
-	private function getStream($table_name, $id){
-		if (false !== ($row = FFDB::conn()->getRow('select `value`, `feeds` from ?n where `id`=?s', $table_name, $id))) {
+	private function getStream($conn, $table_name, $id){
+		if (false !== ($row = $conn->getRow('select `value`, `feeds` from ?n where `id`=?s', $table_name, $id))) {
 			if ($row != null){
 				$options = unserialize($row['value']);
 				$options->feeds = $row['feeds'];

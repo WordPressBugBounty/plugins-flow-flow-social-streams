@@ -1,6 +1,13 @@
 <?php
+// phpcs:disable
 
 namespace Unirest\Request\Test;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'WPINC' ) && ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) ) {
+		exit;
+	}
+}
 
 use Unirest\Request as Request;
 
@@ -483,3 +490,5 @@ class UnirestRequestTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('This is a test', $response->body->postData->params->{'files[owl.gif]'});
     }
 }
+
+// phpcs:enable

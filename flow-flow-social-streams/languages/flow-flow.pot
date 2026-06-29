@@ -1,226 +1,276 @@
-# Copyright (C) 2021 Looks Awesome
-# This file is distributed under the same license as the Flow-Flow Lite package.
+# Copyright (C) 2025 Looks Awesome
+# This file is distributed under the same license as the Flow-Flow package.
 msgid ""
 msgstr ""
-"Project-Id-Version: Flow-Flow Lite 4.7.5\n"
+"Project-Id-Version: Flow-Flow 4.9.8\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/flow-flow\n"
-"POT-Creation-Date: 2021-05-07 19:11:24+00:00\n"
+"POT-Creation-Date: 2025-08-26 16:58:39+00:00\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"PO-Revision-Date: 2021-MO-DA HO:MI+ZONE\n"
+"PO-Revision-Date: 2025-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: Team Name <team@example.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
 "X-Generator: grunt-wp-i18n 1.0.3\n"
 
-#: includes/FlowFlowActivator.php:87
+#: .history/includes/FlowFlowActivator_20240312203456.php:265
+#: .history/includes/FlowFlowActivator_20250826142154.php:265
+#: Flow-Flow.4.9.8/flow-flow/includes/FlowFlowActivator.php:265
+#: includes/FlowFlowActivator.php:265
 msgid "Social Stream"
 msgstr ""
 
-#: includes/FlowFlowActivator.php:91
+#: .history/includes/FlowFlowActivator_20240312203456.php:269
+#: .history/includes/FlowFlowActivator_20250826142154.php:269
+#: Flow-Flow.4.9.8/flow-flow/includes/FlowFlowActivator.php:269
+#: includes/FlowFlowActivator.php:269
 msgid "Flow-Flow plugin social stream"
 msgstr ""
 
-#: includes/FlowFlowActivator.php:93
+#: .history/includes/FlowFlowActivator_20240312203456.php:271
+#: .history/includes/FlowFlowActivator_20250826142154.php:271
+#: Flow-Flow.4.9.8/flow-flow/includes/FlowFlowActivator.php:271
+#: includes/FlowFlowActivator.php:271
+#: plugins/insta-flow/includes/FFIActivator.php:190
+#: plugins/social-stacks/social-stacks.php:172
 msgid "Social"
 msgstr ""
 
-#: includes/FlowFlowActivator.php:101
+#: .history/includes/FlowFlowActivator_20240312203456.php:279
+#: .history/includes/FlowFlowActivator_20250826142154.php:279
+#: Flow-Flow.4.9.8/flow-flow/includes/FlowFlowActivator.php:279
+#: includes/FlowFlowActivator.php:279
 msgid "Choose stream to place on page:"
 msgstr ""
 
-#: includes/FlowFlowActivator.php:277
-msgid "Technical problems / hard to use"
-msgstr ""
-
-#: includes/FlowFlowActivator.php:281
-msgid "Free version is limited"
-msgstr ""
-
-#: includes/FlowFlowActivator.php:285
-msgid "Premium is expensive"
-msgstr ""
-
-#: includes/FlowFlowActivator.php:289
-msgid "Upgrading to paid version"
-msgstr ""
-
-#: includes/FlowFlowActivator.php:293
-msgid "Not what I need"
-msgstr ""
-
-#: includes/FlowFlowWPWidget.php:62
+#: Flow-Flow.4.9.8/flow-flow/includes/FlowFlowWPWidget.php:63
+#: includes/FlowFlowWPWidget.php:63
+#: plugins/insta-flow/includes/FFIWPWidget.php:62
+#: plugins/social-stacks/includes/WSSWidget.php:50
 msgid "Title:"
 msgstr ""
 
-#: includes/FlowFlowWPWidget.php:66
+#: Flow-Flow.4.9.8/flow-flow/includes/FlowFlowWPWidget.php:67
+#: includes/FlowFlowWPWidget.php:67
+#: plugins/insta-flow/includes/FFIWPWidget.php:66
 msgid "Stream:"
 msgstr ""
 
-#: includes/LAAdminBase.php:114 includes/LAAdminBase.php:236
+#: Flow-Flow.4.9.8/flow-flow/libs/flowflow/core/src/LAAdminBase.php:104
+#: Flow-Flow.4.9.8/flow-flow/libs/flowflow/core/src/LAAdminBase.php:256
+#: libs/flowflow/core/src/LAAdminBase.php:104
+#: libs/flowflow/core/src/LAAdminBase.php:256
 msgid "You do not have sufficient permissions to access this page."
 msgstr ""
 
-#: includes/display_deactivation_popup.php:8
-msgid ""
-"Please kindly let us know why you are deactivating. Your answer will help "
-"us to serve you better"
-msgstr ""
-
-#: includes/display_deactivation_popup.php:23
-msgid "Deactivate"
-msgstr ""
-
-#: includes/display_deactivation_popup.php:26
-msgid "Submit and deactivate"
-msgstr ""
-
-#: includes/display_deactivation_popup.php:28
-msgid "Cancel"
-msgstr ""
-
-#: views/public.php:39
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:41 views/public.php:41
 msgid "All"
 msgstr ""
 
-#: views/public.php:40
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:42
+#: plugins/insta-flow/views/public.php:32 views/public.php:42
 msgid "Search"
 msgstr ""
 
-#: views/public.php:41
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:43
+#: plugins/insta-flow/views/public.php:33 views/public.php:43
 msgid "Expand"
 msgstr ""
 
-#: views/public.php:42
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:44
+#: plugins/insta-flow/views/public.php:34 views/public.php:44
 msgid "Collapse"
 msgstr ""
 
-#: views/public.php:43
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:45
+#: plugins/insta-flow/views/public.php:35 views/public.php:45
 msgid "Posted on"
 msgstr ""
 
-#: views/public.php:44
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:46
+#: plugins/insta-flow/views/public.php:37 views/public.php:46
 msgid "Followers"
 msgstr ""
 
-#: views/public.php:45
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:47
+#: plugins/insta-flow/views/public.php:38 views/public.php:47
 msgid "Following"
 msgstr ""
 
-#: views/public.php:46
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:48
+#: plugins/insta-flow/views/public.php:39 views/public.php:48
 msgid "Posts"
 msgstr ""
 
-#: views/public.php:47
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:49
+#: plugins/insta-flow/views/public.php:36 views/public.php:49
 msgid "Show more"
 msgstr ""
 
-#: views/public.php:50
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:52
+#: plugins/insta-flow/views/public.php:42 views/public.php:52
 msgid "Yesterday"
 msgstr ""
 
-#: views/public.php:51
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:53
+#: plugins/insta-flow/views/public.php:43 views/public.php:53
 msgid "s"
 msgstr ""
 
-#: views/public.php:52
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:54
+#: plugins/insta-flow/views/public.php:44 views/public.php:54
 msgid "m"
 msgstr ""
 
-#: views/public.php:53
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:55
+#: plugins/insta-flow/views/public.php:45 views/public.php:55
 msgid "h"
 msgstr ""
 
-#: views/public.php:54
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:56
+#: plugins/insta-flow/views/public.php:46 views/public.php:56
 msgid "ago"
 msgstr ""
 
-#: views/public.php:56
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:58
+#: plugins/insta-flow/views/public.php:48 views/public.php:58
 msgid "Jan"
 msgstr ""
 
-#: views/public.php:56
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:58
+#: plugins/insta-flow/views/public.php:48 views/public.php:58
 msgid "Feb"
 msgstr ""
 
-#: views/public.php:56
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:58
+#: plugins/insta-flow/views/public.php:48 views/public.php:58
 msgid "March"
 msgstr ""
 
-#: views/public.php:57
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:59
+#: plugins/insta-flow/views/public.php:49 views/public.php:59
 msgid "April"
 msgstr ""
 
-#: views/public.php:57
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:59
+#: plugins/insta-flow/views/public.php:49 views/public.php:59
 msgid "May"
 msgstr ""
 
-#: views/public.php:57
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:59
+#: plugins/insta-flow/views/public.php:49 views/public.php:59
 msgid "June"
 msgstr ""
 
-#: views/public.php:58
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:60
+#: plugins/insta-flow/views/public.php:50 views/public.php:60
 msgid "July"
 msgstr ""
 
-#: views/public.php:58
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:60
+#: plugins/insta-flow/views/public.php:50 views/public.php:60
 msgid "Aug"
 msgstr ""
 
-#: views/public.php:58
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:60
+#: plugins/insta-flow/views/public.php:50 views/public.php:60
 msgid "Sept"
 msgstr ""
 
-#: views/public.php:59
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:61
+#: plugins/insta-flow/views/public.php:51 views/public.php:61
 msgid "Oct"
 msgstr ""
 
-#: views/public.php:59
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:61
+#: plugins/insta-flow/views/public.php:51 views/public.php:61
 msgid "Nov"
 msgstr ""
 
-#: views/public.php:59
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:61
+#: plugins/insta-flow/views/public.php:51 views/public.php:61
 msgid "Dec"
 msgstr ""
 
-#: views/public.php:62
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:64
+#: plugins/insta-flow/views/public.php:54 views/public.php:64
 msgid "Navigate with arrow keys"
 msgstr ""
 
-#: views/public.php:63
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:65 views/public.php:65
 msgid "View on"
 msgstr ""
 
-#: views/public.php:64
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:66 views/public.php:66
 msgid "View on site"
 msgstr ""
 
-#: views/public.php:65
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:67 views/public.php:67
 msgid "View all"
 msgstr ""
 
-#: views/public.php:66
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:68 views/public.php:68
 msgid "comments"
 msgstr ""
 
-#: views/public.php:67
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:69 views/public.php:69
 msgid "Scroll for more"
 msgstr ""
 
-#: views/public.php:68
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:70 views/public.php:70
 msgid "No comments yet."
 msgstr ""
 
-#: views/public.php:69
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:71 views/public.php:71
+msgid "Check all comments"
+msgstr ""
+
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:72 views/public.php:72
 msgid "Be the first!"
 msgstr ""
 
-#: views/public.php:70
+#: Flow-Flow.4.9.8/flow-flow/views/public.php:73 views/public.php:73
 msgid "Loading"
 msgstr ""
 
+#: plugins/insta-flow/includes/FFIActivator.php:186
+msgid "Grace"
+msgstr ""
+
+#: plugins/insta-flow/includes/FFIActivator.php:187
+msgid "Instagram Feed"
+msgstr ""
+
+#: plugins/insta-flow/includes/FFIActivator.php:196
+msgid "Stream"
+msgstr ""
+
+#: plugins/insta-flow/includes/FFIActivator.php:200
+msgid "Choose stream to display"
+msgstr ""
+
+#: plugins/insta-flow/views/public.php:31
+msgid "Show All"
+msgstr ""
+
+#: plugins/social-stacks/includes/WSSWidget.php:54
+msgid "Stack:"
+msgstr ""
+
+#: plugins/social-stacks/social-stacks.php:166
+msgid "Social Stack"
+msgstr ""
+
+#: plugins/social-stacks/social-stacks.php:170
+msgid "Place your social stack"
+msgstr ""
+
+#: plugins/social-stacks/social-stacks.php:181
+msgid "Choose stack to place on page:"
+msgstr ""
+
 #. Plugin Name of the plugin/theme
-msgid "Flow-Flow Lite"
+msgid "Flow-Flow"
 msgstr ""
 
 #. Plugin URI of the plugin/theme
@@ -228,7 +278,7 @@ msgid "social-streams.com"
 msgstr ""
 
 #. Description of the plugin/theme
-msgid "Awesome social streams on your site"
+msgid "Awesome social streams on your website"
 msgstr ""
 
 #. Author of the plugin/theme

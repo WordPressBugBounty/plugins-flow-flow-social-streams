@@ -1,5 +1,6 @@
 <?php namespace flow\db\migrations;
-use flow\db\FFDB;
+use Exception;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -19,8 +20,8 @@ class FFMigration_3_0 implements ILADBMigration{
 	}
 
 	public function execute($conn, $manager) {
-		if (FFDB::existColumn($manager->streams_table_name, 'layout')){
-			$conn->query("ALTER TABLE ?n DROP `layout`",  $manager->streams_table_name);
+		if (LADDLUtils::existColumn($conn, $manager->streams_table_name, 'layout')){
+            LADDLUtils::dropColumn($conn, $manager->streams_table_name, 'layout');
 		}
 
 		$streams = $this->streams($conn, $manager->streams_table_name);
@@ -73,12 +74,12 @@ class FFMigration_3_0 implements ILADBMigration{
 			$options->{"g-ratio-img"} =  "1/2";
 			$options->{"g-overlay"} =  "nope";
 			$options->{"m-overlay"} =  "nope";
-			$options->{"template"} = array('header', 'text', 'image', 'meta');
+			$options->{"template"} = [ 'header', 'text', 'image', 'meta' ];
 			$value = serialize($options);
 
 			if ( false === $conn->query( 'UPDATE ?n SET `value` = ?s WHERE `id` = ?s',
 					$manager->streams_table_name, $value, $stream['id'] ) ) {
-				throw new \Exception();
+				throw new Exception();
 			}
 
 			$options->id = $stream['id'];
@@ -91,6 +92,6 @@ class FFMigration_3_0 implements ILADBMigration{
 				$table_name))){
 			return $result;
 		}
-		return array();
+		return [];
 	}
 }

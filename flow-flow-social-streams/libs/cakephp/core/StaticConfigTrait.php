@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -24,6 +25,8 @@ use LogicException;
  * configuration data registered and manipulated.
  *
  * Implementing objects are expected to declare a static `$_dsnClassMap` property.
+ *
+ * @property \Cake\Core\ObjectRegistry $_registry
  */
 trait StaticConfigTrait
 {
@@ -399,3 +402,5 @@ REGEXP;
         return static::getDsnClassMap();
     }
 }
+
+// phpcs:enable

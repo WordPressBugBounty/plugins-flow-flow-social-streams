@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -524,3 +525,5 @@ class MemcachedEngine extends CacheEngine
         return (bool)$this->_Memcached->increment($this->_config['prefix'] . $group);
     }
 }
+
+// phpcs:enable

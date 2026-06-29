@@ -1,6 +1,6 @@
 <?php namespace flow\db\migrations;
 
-use flow\db\FFDB;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -20,13 +20,7 @@ class FFMigration_3_4 implements ILADBMigration {
 		return '3.4';
 	}
 
-	/**
-	 * @param \flow\db\SafeMySQL $conn
-	 * @param LADBManager $manager
-	 */
 	public function execute( $conn, $manager ) {
-		if (!FFDB::existColumn($manager->cache_table_name, 'send_email')){
-			$conn->query('ALTER TABLE ?n ADD ?n INT DEFAULT 0 NOT NULL', $manager->cache_table_name, 'send_email');
-		}
+        LADDLUtils::addColumnIfNotExist($conn, $manager->cache_table_name, 'send_email', 'INT DEFAULT 0 NOT NULL');
 	}
 }

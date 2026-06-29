@@ -19,14 +19,14 @@ class FFMigration_2_1 implements ILADBMigration{
 
 	public function execute($conn, $manager) {
 		$options = $manager->getOption('options', true);
-		if ($options === false) $options = array();
+		if ($options === false) $options = [];
 		unset($options['last_submit']);
 		unset($options['feeds_changed']);
 		$options = $this->setDefaultValueIfNeeded($options);
 		$manager->setOption('options', $options, true);
 
 		$options = $manager->getOption('fb_auth_options', true);
-		if ($options === false) $options = array();
+		if ($options === false) $options = [];
 		if (!isset($options['facebook_access_token'])) $options['facebook_access_token'] = '';
 		if (!isset($options['facebook_app_id'])) $options['facebook_app_id'] = '';
 		if (!isset($options['facebook_app_secret'])) $options['facebook_app_secret'] = '';
@@ -46,7 +46,7 @@ class FFMigration_2_1 implements ILADBMigration{
 		if (!isset($options['foursquare_client_secret'])) $options['foursquare_client_secret'] = '';
 		if (!isset($options['general-settings-date-format'])) $options['general-settings-date-format'] = 'agoStyleDate';
 		if (!isset($options['general-settings-open-links-in-new-window'])) $options['general-settings-open-links-in-new-window'] = 'nope';
-		if (!isset($options['general-settings-disable-proxy-server'])) $options['general-settings-disable-proxy-server'] = 'yep';
+		if (!isset($options['general-settings-disable-proxy-server'])) $options['general-settings-disable-proxy-server'] = 'nope';
 		if (!isset($options['general-settings-disable-follow-location'])) $options['general-settings-disable-follow-location'] = 'nope';
 //		if (!array_key_exists('general-settings-seo-mode', $options)) $options['general-settings-seo-mode'] = 'yep';
 		return $options;

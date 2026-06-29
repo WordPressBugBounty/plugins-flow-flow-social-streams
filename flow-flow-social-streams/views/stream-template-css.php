@@ -1,5 +1,12 @@
 <?php
-/** @var object $stream */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) {
+		exit;
+	}
+}
+
+// phpcs:disable
 $id = $stream->id;
 if (!isset($stream->filtercolor)) $stream->filtercolor = 'rgb(205, 205, 205)';
 $bradius = ( isset( $stream->bradius ) ) ? intval( $stream->bradius ) : 4;
@@ -14,9 +21,9 @@ $bradius = ( isset( $stream->bradius ) ) ? intval( $stream->bradius ) : 4;
 margin: <?php echo $stream->wallvm;?>px <?php echo $stream->wallhm;?>px 0;
 }
 <?php endif;?>
-#ff-stream-<?php echo $id;?> .ff-header h1,#ff-stream-<?php echo $id;?> .ff-controls-wrapper > span:hover { color: <?php echo $stream->headingcolor;?>; }
+#ff-stream-<?php echo $id;?> .ff-header h1,#ff-stream-<?php echo $id;?> .ff-controls-wrapper > span:hover { color: <?php echo $stream->headingcolor;?> !important; }
 #ff-stream-<?php echo $id;?> .ff-controls-wrapper > span:hover { border-color: <?php echo $stream->headingcolor;?> !important; }
-#ff-stream-<?php echo $id;?> .ff-header h2 { color: <?php echo $stream->subheadingcolor;?>; }
+#ff-stream-<?php echo $id;?> .ff-header h2 { color: <?php echo $stream->subheadingcolor;?> !important; }
 #ff-stream-<?php echo $id;?> .ff-filter-holder .ff-filter,
 #ff-stream-<?php echo $id;?> .ff-filter-holder:before,
 #ff-stream-<?php echo $id;?> .selectric,
@@ -108,6 +115,23 @@ border-color: <?php echo $stream->headingcolor;?>;
 	box-shadow: 0 1px 4px 0 <?php echo $stream->shadow;?>;
 }
 
+#ff-stream-<?php echo $id;?> .ff-post-cta {
+    background-color: <?php echo $stream->cardcolor;?>;
+    color: <?php echo $stream->textcolor;?>;
+}
+
+    #ff-stream-<?php echo $id;?> .in .ff-post-cta,
+    #ff-stream-infinite-<?php echo $id;?>  .ff-viewport-slide-in .ff-post-cta,
+    #ff-stream-<?php echo $id;?>-slideshow .ff-show-cta .ff-post-cta {
+    background-color: #e916b7;
+    color: #ffffff;
+    }
+    #ff-stream-<?php echo $id;?> .in .ff-post-cta {
+    -webkit-transition-delay: 2s;
+    transition-delay: 2s;
+}
+
+
 #ff-stream-<?php echo $id;?> .ff-content a {
 	color: <?php echo $stream->linkscolor;?>;
 }
@@ -176,10 +200,15 @@ background-color: <?php echo $stream->bgcolor;?>;
 border-radius: <?php echo $bradius + 2;?>px;
 }
 
+.ff-upic-round.ff-sc-label2 .ff-icon {
+    border-top-right-radius: <?php echo $bradius - 1 ;?>px;
+}
+
 .ff-upic-round.ff-infinite > li {
 border-radius: <?php echo $bradius;?>px;
 overflow: hidden
 }
+
 
 .ff-upic-round .ff-img-holder:first-child,
 .ff-upic-round .ff-img-holder:first-child img {
@@ -205,3 +234,4 @@ border-radius: <?php echo $bradius;?>px !important;
 <?php
   if(!empty($stream->css)) echo stripslashes($stream->css);
 ?>
+<?php // phpcs:enable ?>

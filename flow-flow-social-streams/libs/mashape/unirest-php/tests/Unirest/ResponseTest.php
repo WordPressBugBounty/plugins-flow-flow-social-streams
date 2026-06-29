@@ -1,6 +1,13 @@
 <?php
+// phpcs:disable
 
 namespace Unirest\Response\Test;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'WPINC' ) && ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) ) {
+		exit;
+	}
+}
 
 use Unirest\Request as Request;
 use Unirest\Response as Response;
@@ -33,3 +40,5 @@ class UnirestResponseTest extends \PHPUnit_Framework_TestCase
         $this->assertSame($response->body->number, 1234567890);
     }
 }
+
+// phpcs:enable

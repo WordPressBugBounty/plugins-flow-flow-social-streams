@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 
 namespace Unirest\Request;
 
@@ -64,3 +65,5 @@ class Body
         return $data;
     }
 }
+
+// phpcs:enable

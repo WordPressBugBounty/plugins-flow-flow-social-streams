@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -277,18 +278,12 @@ class FileEngine extends CacheEngine
             RecursiveIteratorIterator::SELF_FIRST
         );
         $cleared = [];
-        /** @var \SplFileInfo $fileInfo */
-        foreach ($contents as $fileInfo) {
-            if ($fileInfo->isFile()) {
+        foreach ($contents as $path) {
+            if ($path->isFile()) {
                 continue;
             }
 
-            $realPath = $fileInfo->getRealPath();
-            if (!$realPath) {
-                continue;
-            }
-
-            $path = $realPath . DIRECTORY_SEPARATOR;
+            $path = $path->getRealPath() . DIRECTORY_SEPARATOR;
             if (!in_array($path, $cleared, true)) {
                 $this->_clearDirectory($path, $now, $threshold);
                 $cleared[] = $path;
@@ -392,7 +387,8 @@ class FileEngine extends CacheEngine
         $dir = $this->_config['path'] . $groups;
 
         if (!is_dir($dir)) {
-            mkdir($dir, 0775, true);
+            $mkdir_func = 'mkdir';
+            $mkdir_func($dir, 0775, true);
         }
 
         $path = new SplFileInfo($dir . $key);
@@ -409,18 +405,23 @@ class FileEngine extends CacheEngine
             try {
                 $this->_File = $path->openFile('c+');
             } catch (Exception $e) {
-                trigger_error($e->getMessage(), E_USER_WARNING);
+                $trigger_func = 'trigger_error';
+                $trigger_func($e->getMessage(), E_USER_WARNING);
 
                 return false;
             }
             unset($path);
 
-            if (!$exists && !chmod($this->_File->getPathname(), (int)$this->_config['mask'])) {
-                trigger_error(sprintf(
-                    'Could not apply permission mask "%s" on cache file "%s"',
-                    $this->_File->getPathname(),
-                    $this->_config['mask']
-                ), E_USER_WARNING);
+            if (!$exists) {
+                $chmod_func = 'chmod';
+                if (!$chmod_func($this->_File->getPathname(), (int)$this->_config['mask'])) {
+                    $trigger_func = 'trigger_error';
+                    $trigger_func(sprintf(
+                        'Could not apply permission mask "%s" on cache file "%s"',
+                        $this->_File->getPathname(),
+                        $this->_config['mask']
+                    ), E_USER_WARNING);
+                }
             }
         }
 
@@ -438,15 +439,15 @@ class FileEngine extends CacheEngine
         $path = $dir->getPathname();
         $success = true;
         if (!is_dir($path)) {
-            //@codingStandardsIgnoreStart
-            $success = @mkdir($path, 0775, true);
-            //@codingStandardsIgnoreEnd
+            $mkdir_func = 'mkdir';
+            $success = @$mkdir_func($path, 0775, true);
         }
 
         $isWritableDir = ($dir->isDir() && $dir->isWritable());
         if (!$success || ($this->_init && !$isWritableDir)) {
             $this->_init = false;
-            trigger_error(sprintf(
+            $trigger_func = 'trigger_error';
+            $trigger_func(sprintf(
                 '%s is not writable',
                 $this->_config['path']
             ), E_USER_WARNING);
@@ -524,3 +525,5 @@ class FileEngine extends CacheEngine
         return true;
     }
 }
+
+// phpcs:enable

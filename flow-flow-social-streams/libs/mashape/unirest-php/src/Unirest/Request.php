@@ -1,5 +1,5 @@
 <?php
-
+// phpcs:disable
 namespace Unirest;
 
 class Request
@@ -577,3 +577,4 @@ class Request
         return $existing_options;
     }
 }
+// phpcs:enable

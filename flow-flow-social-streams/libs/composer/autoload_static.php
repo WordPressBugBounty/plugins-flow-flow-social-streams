@@ -4,14 +4,24 @@
 
 namespace Composer\Autoload;
 
-class ComposerStaticInit43eb14388167ec0d337656889a5073f4
+class ComposerStaticInitfaae9b7ac8b3768849d51352a5df3383
 {
     public static $files = array (
-        '72142d7b40a3a0b14e91825290b5ad82' => __DIR__ . '/..' . '/cakephp/core/functions.php',
         '948ad5488880985ff1c06721a4e447fe' => __DIR__ . '/..' . '/cakephp/utility/bootstrap.php',
+        '72142d7b40a3a0b14e91825290b5ad82' => __DIR__ . '/..' . '/cakephp/core/functions.php',
+        '7b4ea634fa5bd1ccea7e5ca039562961' => __DIR__ . '/..' . '/colshrapnel/safemysql/safemysql.class.php',
     );
 
     public static $prefixLengthsPsr4 = array (
+        'l' => 
+        array (
+            'la\\core\\' => 8,
+        ),
+        'f' => 
+        array (
+            'flow\\social\\' => 12,
+            'flow\\' => 5,
+        ),
         'P' => 
         array (
             'Psr\\SimpleCache\\' => 16,
@@ -25,6 +35,18 @@ class ComposerStaticInit43eb14388167ec0d337656889a5073f4
     );
 
     public static $prefixDirsPsr4 = array (
+        'la\\core\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/flowflow/core/src',
+        ),
+        'flow\\social\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/flowflow/social/src/flow/social',
+        ),
+        'flow\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/includes',
+        ),
         'Psr\\SimpleCache\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/simple-cache/src',
@@ -60,10 +82,10 @@ class ComposerStaticInit43eb14388167ec0d337656889a5073f4
     public static function getInitializer(ClassLoader $loader)
     {
         return \Closure::bind(function () use ($loader) {
-            $loader->prefixLengthsPsr4 = ComposerStaticInit43eb14388167ec0d337656889a5073f4::$prefixLengthsPsr4;
-            $loader->prefixDirsPsr4 = ComposerStaticInit43eb14388167ec0d337656889a5073f4::$prefixDirsPsr4;
-            $loader->prefixesPsr0 = ComposerStaticInit43eb14388167ec0d337656889a5073f4::$prefixesPsr0;
-            $loader->classMap = ComposerStaticInit43eb14388167ec0d337656889a5073f4::$classMap;
+            $loader->prefixLengthsPsr4 = ComposerStaticInitfaae9b7ac8b3768849d51352a5df3383::$prefixLengthsPsr4;
+            $loader->prefixDirsPsr4 = ComposerStaticInitfaae9b7ac8b3768849d51352a5df3383::$prefixDirsPsr4;
+            $loader->prefixesPsr0 = ComposerStaticInitfaae9b7ac8b3768849d51352a5df3383::$prefixesPsr0;
+            $loader->classMap = ComposerStaticInitfaae9b7ac8b3768849d51352a5df3383::$classMap;
 
         }, null, ClassLoader::class);
     }

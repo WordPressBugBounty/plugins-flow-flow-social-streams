@@ -1,6 +1,19 @@
-<?php if ( ! defined( 'WPINC' ) ) die;
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) {
+		exit;
+	}
+}
+
+// phpcs:disable
+
+use la\core\LAUtils;
+use la\core\tabs\LATab;
+
+if ( ! defined( 'WPINC' ) ) die;
 /** @var array $context */
-$dbm = $context['db_manager'];
+$dbm = LAUtils::dbm($context);
 
 ?>
 <style>
@@ -32,7 +45,7 @@ $dbm = $context['db_manager'];
     }
 </style>
 <div id="background-admin">
-    <img src="/wp-content/plugins/flow-flow/assets/flow-admin.png" alt=""/>
+    <img src="<?php echo LAUtils::plugin_url($context); ?>/assets/flow-admin.png" alt=""/>
 </div>
 <div id="fade-overlay" class="">
     <div id="waiting-posts">
@@ -46,10 +59,10 @@ $dbm = $context['db_manager'];
 <form id="flow_flow_form" method="post" action="<?php echo $context['form-action']; ?>" enctype="multipart/form-data">
     <script id="flow_flow_script">
         var _ajaxurl = '<?php echo $context['admin_url']; ?>';
-        var la_plugin_slug_down = '<?php echo $context['slug_down']; ?>';
-        var plugin_url = '<?php echo $context['plugin_url'] . $context['slug'] ; ?>';
+        var la_plugin_slug_down = '<?php echo LAUtils::slug_down($context); ?>';
+        var plugin_url = '<?php echo LAUtils::plugin_url($context) ; ?>';
         var server_time = '<?php echo time() ; ?>';
-        var plugin_ver = '<?php echo $context['version'] ; ?>';
+        var plugin_ver = '<?php echo LAUtils::version($context) ; ?>';
         <?php if (isset($context['js-vars'])) echo $context['js-vars'];?>
     </script>
     <?php
@@ -59,7 +72,7 @@ $dbm = $context['db_manager'];
     <div class="wrapper">
         <?php
         if (FF_USE_WP) {
-            echo '<h2>' . $context['admin_page_title'] . ($context['slug'] == 'flow-flow' ? ' Social Stream v. ' : ' Feed Gallery v. ' ) . $context['version'] . ' <a href="' . $context['faq_url'] . '" target="_blank">Documentation & FAQ</a></h2>';
+            echo '<h2>' . $context['admin_page_title'] . (LAUtils::slug($context) == 'flow-flow-social-streams' ? ' Social Stream v. ' : ' Feed Gallery v. ' ) . LAUtils::version($context) . ' <a href="' . $context['faq_url'] . '" target="_blank">Documentation & FAQ</a></h2>';
 
             echo '<div id="ff-cats">';
             if (FF_USE_WP) {
@@ -98,3 +111,4 @@ $dbm = $context['db_manager'];
         FlowFlowApp.Controller.makeOverlayTo('show', 'posts-loading' );
     })
 </script>
+<?php // phpcs:enable ?>

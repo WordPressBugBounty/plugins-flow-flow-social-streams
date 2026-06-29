@@ -1,14 +1,24 @@
-<?php if ( ! defined( 'WPINC' ) ) die;
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) {
+		exit;
+	}
+}
+
+// phpcs:disable
+ use la\core\LAUtils;
+
+if ( ! defined( 'WPINC' ) ) die;
 /**
  * FlowFlow.
- *
- * @var array $context
  *
  * @package   FlowFlow
  * @author    Looks Awesome <email@looks-awesome.com>
  *
  * @link      http://looks-awesome.com
  * @copyright Looks Awesome
+ * @var array $context
  */
 $options = $context['options'];
 ?>
@@ -17,9 +27,9 @@ $options = $context['options'];
 		<h1  class="desc-following">General Settings</h1>
 		<p class="desc">Adjust plugin's global settings here.</p>
 		<dl class="section-settings">
-			<dt class="ff_mod_roles ff_hide4site"><span class="ff-icon-lock"></span> Who can moderate
+			<dt class="multiline ff_mod_roles ff_hide4site">Who can moderate <span class="ff-icon-lock"></span>
                 <p class="desc">User roles that are allowed to moderate feeds.</p>
-                <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow/#pricing">here</a>.</div></div>
+                <div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please make one&#x2011;time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>
 			</dt>
 			<dd class="ff_mod_roles ff_hide4site ff-feature">
 				<?php
@@ -55,16 +65,22 @@ $options = $context['options'];
 					       value="yep"/><div><div></div></div>
 				</label>
 			</dd>
-			<dt class="multiline"><span class="ff-icon-lock"></span> Disable proxy pictures
-                <p class="desc">Proxying improves performance.</p>
-                <div class="desc hint-block hint-block-pro"><span class="hint-link">Upgrade to unlock</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please activate <a href="#addons-tab">BOOST subscription</a> or make one&#x2011;time purchase of <a href="http://goo.gl/g7XQzu" target="_blank">PRO version</a>.<br>Check out comparison table of all versions <a target="_blank" href="https://social-streams.com/flow#pricing">here</a>.</div></div>
-            </dt>
-			<dd class="ff-feature">
+			<dt class="multiline">Disable proxy pictures<p class="desc">Proxying improves performance.</p></dt>
+			<dd>
 				<label for="general-settings-disable-proxy-server">
 					<input id="general-settings-disable-proxy-server" class="clearcache switcher" type="checkbox"
 					       name="flow_flow_options[general-settings-disable-proxy-server]"
 						<?php if (isset($options['general-settings-disable-proxy-server']) && $options['general-settings-disable-proxy-server'] == 'yep') echo "checked"; ?>
 					       value="yep"/><div><div></div></div>
+			</dd>
+			<dt class="multiline">Alternative caching<p class="desc">Use in case of conflict with third-party caching mechanisms.</p></dt>
+			<dd>
+				<label for="general-settings-disable-cache">
+					<input id="general-settings-disable-cache" class="clearcache switcher" type="checkbox"
+					       name="flow_flow_options[general-settings-disable-cache]"
+						<?php if (isset($options['general-settings-disable-cache']) && $options['general-settings-disable-cache'] == 'yep') echo "checked"; ?>
+					       value="yep"/><div><div></div></div>
+				</label>
 			</dd>
 			<dt class="multiline">Disable curl "follow location"
 			<p class="desc">Can help if your server uses deprecated security setting 'safe_mode' and streams don't load.</p></dt>
@@ -113,6 +129,7 @@ $options = $context['options'];
 						   ?>"/><div><div></div></div>
 			</dd>
 
+            <?php if ( LAUtils::slug($context) === 'flow-flow-social-streams'): ?>
             <dt class="multiline">Notify about broken feeds
             <p class="desc">You will get notifications once per day to your blog admin email.</p>
             </dt>
@@ -132,6 +149,7 @@ $options = $context['options'];
 						<?php if (isset($options['general-render-alt']) && $options['general-render-alt'] == 'yep') echo "checked"; ?> value="yep"/>
 					<div><div></div></div>
 			</dd>
+            <?php endif; ?>
 
 			<dt class="multiline">Remove all data on uninstall
 			<p class="desc">Check this if you want to erase all database records that plugin created.<br>Also will remove any Boosts subscription.</p>
@@ -147,7 +165,9 @@ $options = $context['options'];
 	</div>
 	<?php
 		/** @noinspection PhpIncludeInspection */
-		include($context['root']  . 'views/footer.php');
+		include( LAUtils::root($context) . 'views/footer.php');
 	?>
 
 </div>
+
+<?php // phpcs:enable ?>

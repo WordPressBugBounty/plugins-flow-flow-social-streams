@@ -1,5 +1,5 @@
 <?php namespace flow\db\migrations;
-use flow\db\FFDB;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -19,13 +19,13 @@ class FFMigration_2_3 implements ILADBMigration{
 	}
 
 	public function execute($conn, $manager) {
-		if (!FFDB::existTable($manager->image_cache_table_name)){
+		if (!LADDLUtils::existTable($conn, $manager->image_cache_table_name)){
 			$charset_collate = '';
-			$charset = FFDB::charset();
+			$charset = LADDLUtils::charset();
 			if ( !empty( $charset ) ) {
 				$charset_collate = "DEFAULT CHARACTER SET {$charset}";
 			}
-			$collate = FFDB::collate();
+			$collate = LADDLUtils::collate();
 			if ( !empty( $collate ) ) {
 				$charset_collate .= " COLLATE {$collate}";
 			}
@@ -34,9 +34,6 @@ class FFMigration_2_3 implements ILADBMigration{
 			$conn->query($sql, $manager->image_cache_table_name);
 		}
 
-		if (!FFDB::existColumn($manager->table_prefix . 'snapshots', 'dump')){
-			$sql = "ALTER TABLE ?n ADD COLUMN ?n BLOB NULL";
-			$conn->query($sql, $manager->table_prefix . 'snapshots', 'dump');
-		}
+        LADDLUtils::addColumnIfNotExist($conn, $manager->table_prefix . 'snapshots', 'dump', 'BLOB NULL');
 	}
 }

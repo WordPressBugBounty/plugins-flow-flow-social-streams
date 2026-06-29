@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -111,3 +112,5 @@ class JsonConfig implements ConfigEngineInterface
         return file_put_contents($filename, json_encode($data, JSON_PRETTY_PRINT)) > 0;
     }
 }
+
+// phpcs:enable

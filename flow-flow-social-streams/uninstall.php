@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * Fired when the plugin is uninstalled.
  *
@@ -23,7 +24,9 @@ function __delete_options() {
 }
 
 function __delete_transients() {
-	//delete_transient( 'TRANSIENT_NAME' );
+	global $wpdb;
+	$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_ff_%' OR option_name LIKE '_transient_timeout_ff_%'" );
+	$wpdb->query( "DELETE FROM $wpdb->options WHERE option_name LIKE '_transient_flow_flow_%' OR option_name LIKE '_transient_timeout_flow_flow_%'" );
 }
 
 /**
@@ -50,23 +53,23 @@ function __clean_db() {
 	global $wpdb;
 	$prefix = $wpdb->prefix . 'ff_';
 	$table_name = $prefix . 'cache';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 	$table_name = $prefix . 'image_cache';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 	$table_name = $prefix . 'options';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 	$table_name = $prefix . 'posts';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 	$table_name = $prefix . 'streams';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 	$table_name = $prefix . 'streams_sources';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 	$table_name = $prefix . 'snapshots';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 	$table_name = $prefix . 'comments';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 	$table_name = $prefix . 'post_media';
-	$wpdb->query("DROP TABLE {$table_name}");
+	$wpdb->query("DROP TABLE IF EXISTS {$table_name}");
 }
 
 function __flow_flow_full_clean(){
@@ -95,3 +98,4 @@ if (is_multisite()){
 else {
 	__flow_flow_full_clean();
 }
+// phpcs:enable

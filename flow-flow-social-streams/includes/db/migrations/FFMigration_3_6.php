@@ -1,7 +1,5 @@
 <?php namespace flow\db\migrations;
 
-use flow\db\LADBManager;
-use flow\db\SafeMySQL;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -20,10 +18,6 @@ class FFMigration_3_6 implements ILADBMigration{
 		return '3.6';
 	}
 
-	/**
-	 * @param SafeMySQL $conn
-	 * @param LADBManager $manager
-	 */
 	public function execute( $conn, $manager ) {
 		$cache_table_name = $manager->cache_table_name;
 		$all = $conn->getAll('select * from ?n', $cache_table_name);

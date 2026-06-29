@@ -1,5 +1,5 @@
 <?php namespace flow\db\migrations;
-use flow\db\FFDB;
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -19,13 +19,13 @@ class FFMigration_2_5 implements ILADBMigration{
 	}
 
 	public function execute($conn, $manager) {
-		if (!FFDB::existColumn($manager->posts_table_name, 'post_timestamp')){
-			$conn->query("ALTER TABLE ?n ADD COLUMN ?n INT", $manager->posts_table_name, 'post_timestamp');
-		}
-		if (FFDB::existColumn($manager->posts_table_name, 'post_date')){
-			$conn->query("ALTER TABLE ?n DROP `post_date`",  $manager->posts_table_name);
-		}
+        LADDLUtils::addColumnIfNotExist($conn, $manager->posts_table_name, 'post_timestamp', 'INT');
+        if (LADDLUtils::existColumn($conn, $manager->posts_table_name, 'post_date')){
+            LADDLUtils::dropColumn($conn, $manager->posts_table_name, 'post_date');
+        }
 
-		$conn->query('DELETE FROM ?n', $manager->cache_table_name);
+        // REMOVED: $conn->query('DELETE FROM ?n', $manager->cache_table_name);
+        // The DELETE statement was causing data loss when repairDB() force-ran all migrations
+        // Since all operations here are now idempotent (check before modify), this migration can safely be re-run
 	}
 }

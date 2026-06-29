@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -694,3 +695,5 @@ class Cache
         return $pool->add($key, $value);
     }
 }
+
+// phpcs:enable

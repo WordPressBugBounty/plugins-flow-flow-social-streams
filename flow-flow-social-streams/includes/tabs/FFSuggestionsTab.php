@@ -1,5 +1,6 @@
 <?php namespace flow\tabs;
 
+use la\core\LAUtils;
 use la\core\tabs\LATab;
 
 if ( ! defined( 'WPINC' ) ) die;
@@ -12,7 +13,6 @@ if ( ! defined( 'WPINC' ) ) die;
  * @link      http://looks-awesome.com
  * @copyright Looks Awesome
  */
-
 class FFSuggestionsTab implements LATab{
 	public function __construct() {
 	}
@@ -31,6 +31,6 @@ class FFSuggestionsTab implements LATab{
 
 	public function includeOnce( $context ) {
 		/** @noinspection PhpIncludeInspection */
-		include_once($context['root']  . 'views/suggestions.php');
+		include_once(LAUtils::root($context)  . 'views/suggestions.php');
 	}
 }

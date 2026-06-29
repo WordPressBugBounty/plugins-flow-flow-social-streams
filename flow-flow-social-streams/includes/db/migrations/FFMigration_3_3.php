@@ -1,8 +1,7 @@
 <?php namespace flow\db\migrations;
 
+use la\core\db\LADDLUtils;
 use la\core\db\migrations\ILADBMigration;
-use flow\db\LADBManager;
-use flow\db\FFDB;
 
 if ( ! defined( 'WPINC' ) ) die;
 /**
@@ -19,12 +18,8 @@ class FFMigration_3_3 implements ILADBMigration{
 		return '3.3';
 	}
 	
-	/**
-	 * @param SafeMySQL $conn
-	 * @param LADBManager $manager
-	 */
 	public function execute($conn, $manager){
-		if (!FFDB::existTable($manager->comments_table_name)){
+		if (!LADDLUtils::existTable($conn, $manager->comments_table_name)){
 			$sql = "CREATE TABLE ?n
 			(
 				`id` VARCHAR(50) NOT NULL,
@@ -40,7 +35,7 @@ class FFMigration_3_3 implements ILADBMigration{
 	}
 	
 	private function charset(){
-		$charset = FFDB::charset();
+		$charset = LADDLUtils::charset();
 		if ( !empty( $charset ) ) {
 			$charset = " CHARACTER SET {$charset}";
 		}

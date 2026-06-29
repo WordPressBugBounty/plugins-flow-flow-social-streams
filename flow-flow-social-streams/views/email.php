@@ -1,4 +1,13 @@
-<?php if ( ! defined( 'WPINC' ) ) die;
+<?php
+
+if ( ! defined( 'ABSPATH' ) ) {
+	if ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) {
+		exit;
+	}
+}
+
+// phpcs:disable
+ if ( ! defined( 'WPINC' ) ) die;
 /**
  * Represents the view for the administration dashboard.
  *
@@ -10,7 +19,8 @@
  * @link      http://looks-awesome.com
  * @copyright Looks Awesome
  */
-$logo_url = $this->context['plugin_url'] . $this->context['slug'] . '/assets/logo.png';
+
+$logo_url = \la\core\LAUtils::plugin_url($this->context) . '/assets/logo.png';
 ?>
 <html>
 	<head>
@@ -228,3 +238,5 @@ $logo_url = $this->context['plugin_url'] . $this->context['slug'] . '/assets/log
 	</body>
 </html>
 
+
+<?php // phpcs:enable ?>

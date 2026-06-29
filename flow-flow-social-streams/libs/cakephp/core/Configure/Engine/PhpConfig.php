@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable
 /**
  * CakePHP(tm) : Rapid Development Framework (https://cakephp.org)
  * Copyright (c) Cake Software Foundation, Inc. (https://cakefoundation.org)
@@ -120,3 +121,5 @@ class PhpConfig implements ConfigEngineInterface
         return file_put_contents($filename, $contents) > 0;
     }
 }
+
+// phpcs:enable

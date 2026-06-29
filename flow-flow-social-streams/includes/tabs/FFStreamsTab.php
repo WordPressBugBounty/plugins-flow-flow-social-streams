@@ -1,4 +1,6 @@
-<?php namespace flow\tabs;
+<?php
+// phpcs:disable
+ namespace flow\tabs;
 
 use la\core\tabs\LATab;
 
@@ -34,10 +36,10 @@ class FFStreamsTab implements LATab{
 
         $plugins_url = plugins_url() . '/' . $context['plugin_dir_name'];
 
-		$export = array();
+		$export = [];
 		foreach ($arr as $stream) {
 
-			$item = array();
+			$item = [];
 
 			foreach ($stream as $key => $value) {
                 if ($key !== 'value') {
@@ -66,7 +68,7 @@ class FFStreamsTab implements LATab{
 				<div class="section" id="streams-list-section">
 					<h1 class="desc-following contains-button"><span>List of your streams</span> <span class="admin-button green-button button-add">create stream</span></h1>
                     <div id="how-it-works"><a href="#" class="ff-pseudo-link">Quick guide</a></div>
-                    <p class="desc">Streams are containers for <a class="ff-pseudo-link" href="#sources-tab">feeds</a> you created. You decide which social feeds you add to or remove from container and how it looks on site pages. Stream status (green or red) shows if any of connected feeds have error. <a href="#" class="ff-pseudo-link tutorial-link">Show me quick tutorial</a></p>
+                    <p class="desc">Streams are containers for <a class="ff-pseudo-link" href="#sources-tab">feeds</a> you've created. You can add/mix social feeds in the container and customize how it will look on site pages. Stream status (green or red) shows if any of connected feeds have API error. <a href="#" class="ff-pseudo-link tutorial-link">Show me quick tutorial</a></p>
 					<table>
 						<thead>
 						<tr>
@@ -136,9 +138,6 @@ class FFStreamsTab implements LATab{
 								}
 							}
 
-							// not used anymore
-							$layout = isset($stream['layout']) ? '<span class="highlight">' . $stream['layout'] . '</span>' : '';
-
 							echo
 								'<tr data-stream-id="' . $id . '">
 							      <td class="controls"><div class="loader-wrapper"><div class="throbber-loader"></div></div><i class="flaticon-tool_edit"></i> <i class="flaticon-tool_clone"></i> <i class="flaticon-tool_delete"></i></td>
@@ -170,7 +169,7 @@ class FFStreamsTab implements LATab{
                             </div>
                             <div data-stream-type="cloud">
                                 <h3>Cloud</h3>
-                                <p>For feeds hosted in our cloud network. Can contain only <a href="#addons-tab"  class="ff-pseudo-link" target="_blank">boosted feeds</a>. Posts data is cached and updated in cloud and stream is delivered directly from cloud to site pages thus offloads your WordPress website server completely. Exclusive features are upcoming for cloud streams soon.</p>
+                                <p>For feeds hosted in our cloud network. Can contain only <a href="#addons-tab"  class="ff-pseudo-link" target="_blank">boosted feeds</a>. Posts data is cached and updated in cloud and feeds are delivered directly from cloud to site pages. Exclusive features are available such as shoppable buttons and pinned posts.</p>
                                 <span class="stream-btn-cta"><i class="flaticon-arrow-back-2"></i></span>
                             </div>
                         </div>
@@ -214,12 +213,30 @@ class FFStreamsTab implements LATab{
                 </div>
 
                 <div class="section rating-promo">
-                    <div class="fb-wrapper"><div class="fb-page" data-href="https://www.facebook.com/SocialStreamApps/" data-small-header="true" data-adapt-container-width="true" data-hide-cover="true" data-show-facepile="false"><div class="fb-xfbml-parse-ignore"><blockquote cite="https://www.facebook.com/SocialStreamApps/"><a href="https://www.facebook.com/SocialStreamApps/">Looks Awesome</a></blockquote></div></div></div>
+                    <div class="fb-wrapper">
+                        <div class="fb-mini-widget">
+                            <div class="fb-mini-info">
+                                <div class="fb-mini-logo">
+                                    <svg viewBox="0 0 24 24" width="24" height="24" fill="#1877F2">
+                                        <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                                    </svg>
+                                </div>
+                                <div class="fb-mini-text">
+                                    <a href="https://www.facebook.com/SocialStreamApps/" target="_blank" class="fb-mini-title">Social Stream Apps</a>
+                                    <span class="fb-mini-followers">3.6K followers</span>
+                                </div>
+                            </div>
+                            <a href="https://www.facebook.com/SocialStreamApps/" target="_blank" class="fb-mini-btn">
+                                <span>Follow</span>
+                            </a>
+                        </div>
+                    </div>
                     <h1 class="desc-following"><span>Help plugin to grow</span></h1>
-                    <p class="">A lot of users only think to review Flow-Flow when something goes wrong while many more people use it satisfactory. Don't let this go unnoticed. If you find Flow-Flow useful please leave your honest rating and review on plugin's <a href="https://wordpress.org/support/plugin/flow-flow-social-streams/reviews/?filter=5" target="_blank">Review page</a> to help Flow-Flow grow and endorse its further development!</p>
+                    <p class="">A lot of users only think to review Flow-Flow when something goes wrong while many more people use it satisfactory. Don't let this go unnoticed. If you find Flow-Flow useful please leave your honest rating and review on plugins <a href="http://codecanyon.net/downloads" target="_blank">Downloads page</a> to help Flow-Flow grow and endorse its further development!</p>
                 </div>
 			</div>
 		</div>
 		<?php
 	}
 } 
+// phpcs:enable
