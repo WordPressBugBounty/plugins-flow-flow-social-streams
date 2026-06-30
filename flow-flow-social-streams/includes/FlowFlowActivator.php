@@ -68,13 +68,13 @@ class FlowFlowActivator extends LAActivatorBase
         $context = [
             'root' => plugin_dir_path($file),
             'slug' => 'flow-flow-social-streams',
-            'slug_down' => 'flow_flow_social_streams',
+            'slug_down' => 'flow_flow',
             'plugin_url' => plugin_dir_url(dirname($file) . '/'),
             'plugin_dir_name' => basename(dirname($file)),
             'plugin_basename' => function_exists('plugin_basename') ? plugin_basename($file) : basename(dirname($file)) . '/' . basename($file),
             'admin_url' => admin_url('admin-ajax.php'),
             'table_name_prefix' => $wpdb->prefix . 'ff_',
-            'version' => '5.0.1',
+            'version' => '5.0.2',
             'faq_url' => 'https://docs.social-streams.com/',
             'count_posts_4init' => 30
         ];

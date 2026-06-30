@@ -59,7 +59,7 @@ if ($context['boosts']){
 			</tbody>
 		</table>
 
-        <span class='admin-button green-button create_backup'>Create new database snapshot</span> <span class="ff-icon-lock"></span> <div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please make one‑time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>
+        <span class="ff-icon-lock"></span> <span class='admin-button green-button create_backup'>Create new database snapshot</span> <div class="desc hint-block hint-block-pro"><span class="hint-link">Available in PRO</span><div class="hint hint-pro"><h1>PREMIUM FEATURE</h1>To access this and many other premium features please make one‑time purchase of <a href="https://codecanyon.net/item/-flowflow-wordpress-social-stream-plugin/9319434?ref=looks_awesome&utm_source=Flow+Admin+Free&utm_medium=Get+Pro+Button&utm_campaign=Admin+Flow+Free+Get+Pro" target="_blank">PRO version</a>.</div></div>
 	</div>
 	<?php
 		/** @noinspection PhpIncludeInspection */
