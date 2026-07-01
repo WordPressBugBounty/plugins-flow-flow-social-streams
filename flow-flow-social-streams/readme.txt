@@ -6,7 +6,7 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tags: instagram feed, facebook feed, embed instagram, instagram widget, instagram gallery
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 5.0.2
+Stable tag: 5.0.3
 
 Display a mix of custom Facebook feed, Instagram feed, X (Twitter) feed in grid gallery or widget.
 
@@ -134,8 +134,8 @@ Flow-Flow Lite edition is distributed "as is" and doesn't contain support servic
 
 == Changelog ==
 
-= Version 5.0.2 =
-* Fix: Tokens generation
+= Version 5.0.3 =
+* Fix: Feeds updating
 
 = Version 5.0.2 =
 * Fix: Minor bug fixes, PHP 8 compatibility improvements, and security hardening

@@ -806,7 +806,10 @@ abstract class LABase {
 		if (is_array($feeds)) {
 			foreach ($feeds as $feed) {
 				$feed = (object)$feed;
-				$result[$feed->id] = $this->createFeedInstance($feed);
+				$instance = $this->createFeedInstance($feed);
+				if ($instance !== null) {
+					$result[$feed->id] = $instance;
+				}
 			}
 		}
 		return $result;
@@ -835,7 +838,11 @@ abstract class LABase {
 		
 		// Special case for TikTok to ensure correct case
 		$className = ($feed->$wpt === 'tiktok') ? 'TikTok' : ucfirst($feed->$wpt);
-		$clazz = new ReflectionClass('flow\\social\\FF' . $className);
+		$clazzName = 'flow\\social\\FF' . $className;
+		if (!class_exists($clazzName)) {
+			return null;
+		}
+		$clazz = new ReflectionClass($clazzName);
         /** @var FFFeed $instance */
 		$instance = $clazz->newInstance();
 		$feed = $this->prepareFeed($feed, $this->generalSettings);

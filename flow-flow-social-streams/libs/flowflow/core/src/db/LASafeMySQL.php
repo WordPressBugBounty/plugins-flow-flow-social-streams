@@ -124,7 +124,10 @@ class LASafeMySQL extends SafeMySQL {
     }
 
     public function close() {
-        return $this->conn->close();
+        if ($this->conn instanceof \mysqli && @$this->conn->thread_id) {
+            return $this->conn->close();
+        }
+        return false;
     }
 
     public function getError() {

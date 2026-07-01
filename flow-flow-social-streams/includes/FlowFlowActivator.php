@@ -74,7 +74,7 @@ class FlowFlowActivator extends LAActivatorBase
             'plugin_basename' => function_exists('plugin_basename') ? plugin_basename($file) : basename(dirname($file)) . '/' . basename($file),
             'admin_url' => admin_url('admin-ajax.php'),
             'table_name_prefix' => $wpdb->prefix . 'ff_',
-            'version' => '5.0.2',
+            'version' => '5.0.3',
             'faq_url' => 'https://docs.social-streams.com/',
             'count_posts_4init' => 30
         ];
