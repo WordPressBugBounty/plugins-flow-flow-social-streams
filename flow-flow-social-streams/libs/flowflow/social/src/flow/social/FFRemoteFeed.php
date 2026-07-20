@@ -80,17 +80,7 @@ class FFRemoteFeed implements FFFeed {
 	 * @throws Exception
 	 */
 	private function proxyRequest(){
-		$domain = $_SERVER['HTTP_HOST'];
-		$url = FF_BOOST_SERVER . 'flow-flow/ff?shop=' . $domain . '&action=get_source&feed=' . $this->object->id();
-		Request::jsonOpts(true);
-		$response = Request::post($url, [
-			'Content-Type: application/x-www-form-urlencoded'
-		], http_build_query($_POST));
-		if ($response->code != 200){
-			error_log(print_r($response, true));
-			throw new Exception('Problem: Remote get source doesnt work');
-		}
-		return json_decode($response->raw_body, true);
+		return [];
 	}
 }
 // phpcs:enable

@@ -100,6 +100,7 @@ class FFDBManager extends LADBManager
         return is_string($val) ? trim(filter_var($val, FILTER_SANITIZE_URL)) : '';
     }
 
+
     /**
      * OAuth endpoint
      * @throws Exception
@@ -110,11 +111,6 @@ class FFDBManager extends LADBManager
             if (!current_user_can('manage_options')) {
                 wp_die(__('You do not have sufficient permissions to access this page.', 'flow-flow-social-streams'), 403);
             }
-            $userId = get_current_user_id();
-            if (empty($userId) || !get_transient($this->plugin_slug_down . '_auth_pending_' . $userId)) {
-                wp_die(__('Security check failed.', 'flow-flow-social-streams'), 403);
-            }
-            delete_transient($this->plugin_slug_down . '_auth_pending_' . $userId);
         }
 
         if (isset($_REQUEST['type'])) {

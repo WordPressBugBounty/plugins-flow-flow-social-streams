@@ -23,11 +23,6 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 $export = '';
 $backups = $context['backups'];
-if ($context['boosts']){
-	$dbm = \la\core\LAUtils::dbm($context);
-	$token = $dbm->getToken();
-	$export = '. <a class="ff-pseudo-link" href="https://api.flowflowapp.com/api/v1/flow-flow/export?&token=' . $token . '" id="ff-download-posts-btn">Download stored posts as CSV</a>';
-}
 ?>
 <div class="section-content" data-tab="backup-tab">
 	<div class="section" id="backup-settings">

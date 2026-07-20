@@ -23,7 +23,7 @@ if (!defined('WPINC')) die;
  */
 /** @var array $context */
 $dbm = LAUtils::dbm($context);
-$slug = LAUtils::slug($context);
+$slug = (LAUtils::slug($context) === 'flow-flow-social-streams') ? 'flow-flow-social-streams' : LAUtils::slug($context);
 if (!$dbm->canCreateCssFolder()) {
     echo '<p class="ff-error" xmlns="http://www.w3.org/1999/html">Error: Plugin cannot create folder <strong>wp-content/resources/' . $slug . '/css</strong>, please add permissions or create this folder manually.</p>';
 }

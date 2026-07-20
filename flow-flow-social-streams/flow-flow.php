@@ -12,7 +12,7 @@
  * Plugin Name:       Flow-Flow Social Streams
  * Plugin URI:        https://social-streams.com
  * Description:       Awesome social streams on your website
- * Version:           5.0.3
+ * Version:           5.0.5
  * Author:            Looks Awesome
  * Author URI:        https://looks-awesome.com
  * Text Domain:       flow-flow-social-streams
@@ -47,7 +47,7 @@ if (!defined('FF_ALTERNATIVE_POST_STORAGE'))
 if (!defined('FF_LOG_FILE_DEST'))
     define('FF_LOG_FILE_DEST', plugin_dir_path(__FILE__) . 'flow-flow-debug.log');
 if (!defined('FF_BOOST_SERVER'))
-    define('FF_BOOST_SERVER', 'https://api.flowflowapp.com/api/v1/');
+    define('FF_BOOST_SERVER', '');
 
 // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 if (!isset($_REQUEST['action']) || $_REQUEST['action'] != 'heartbeat') {

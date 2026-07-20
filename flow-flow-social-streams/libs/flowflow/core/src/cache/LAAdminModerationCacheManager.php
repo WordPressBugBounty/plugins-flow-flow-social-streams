@@ -69,10 +69,11 @@ class LAAdminModerationCacheManager extends LACacheManager {
                             $pinnedOrder = isset($item['pinned_order']) ? (int)$item['pinned_order'] : time();
                             
                             $conn->query(
-                                'UPDATE ?n SET `is_pinned` = ?i, `pinned_order` = ?i WHERE `post_id` = ?s AND ?p',
+                                'UPDATE ?n SET `is_pinned` = ?i, `pinned_order` = ?i, `creation_index` = ?i WHERE `post_id` = ?s AND ?p',
                                 $this->db->posts_table_name,
                                 $isPinned,
                                 $pinnedOrder,
+                                $creation_index,
                                 $id,
                                 $commonPartOfSql
                             );
@@ -133,9 +134,10 @@ class LAAdminModerationCacheManager extends LACacheManager {
                             error_log('Flow-Flow CTA Debug: Saving to DB: ' . $jsonData);
                             
                             $result = $conn->query(
-                                'UPDATE ?n SET `post_additional` = ?s WHERE `post_id` = ?s AND ?p',
+                                'UPDATE ?n SET `post_additional` = ?s, `creation_index` = ?i WHERE `post_id` = ?s AND ?p',
                                 $this->db->posts_table_name,
                                 $jsonData,
+                                $creation_index,
                                 $id,
                                 $commonPartOfSql
                             );
@@ -149,6 +151,8 @@ class LAAdminModerationCacheManager extends LACacheManager {
                     \la\core\cache\LATransientCache::invalidateStream($stream_id);
                 }
                 $conn->commit();
+                $conn->close();
+                die();
             }
             $conn->rollbackAndClose();
             die();

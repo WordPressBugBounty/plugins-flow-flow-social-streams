@@ -3861,7 +3861,7 @@ var FlowFlowApp = (function ($) {
                     //         console.log('boosts data parsing error', e);
                     //         return;
                     //     }
-                    //     var plansRequest = $.get('https://api.flowflowapp.com/api/v1/flow-flow/ff?action=plans' + (FlowFlow.subscription && FlowFlow.subscription.plan_id ? '&active_plan=' + FlowFlow.subscription.plan_id : ''));
+                    //     var plansRequest = null;
                     //     $.when(plansRequest).then(function onSuccess(plansData) {
                     //         var plans = plansData;
                     //         FlowFlow.renderBoostPricingTable(plans, boosts);

@@ -312,7 +312,7 @@ abstract class LABase {
 	}
 	
 	public final function refreshCache($streamId = null, $force = false, $withDisabled = false) {
-		if (!defined('WP_DEBUG') || !WP_DEBUG) {
+		if (defined('WP_DEBUG') && WP_DEBUG) {
             $this->log('Flow-Flow Debug: refreshCache called with streamId=' . ($streamId ?? 'null') . ', force=' . ($force ? 'true' : 'false') . ', withDisabled=' . ($withDisabled ? 'true' : 'false'));
         }
 
@@ -339,13 +339,13 @@ abstract class LABase {
                 if (empty($streamId)) {
                     $sql = $conn->parse('SELECT `cach`.`feed_id` FROM ?n `cach` WHERE ?p AND (`cach`.last_update + `cach`.cache_lifetime * 60) < UNIX_TIMESTAMP() ORDER BY `cach`.last_update', 
                         $dbm->cache_table_name, $enabled);
-                    if (!defined('WP_DEBUG') || !WP_DEBUG) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
                         $this->log('Flow-Flow Debug: Refreshing all feeds with expired cache');
                     }
                 } else {
                     $sql = $conn->parse('SELECT `cach`.`feed_id` FROM ?n `cach` INNER JOIN ?n `ss` ON `ss`.feed_id = `cach`.feed_id WHERE ?p AND `ss`.stream_id = ?s AND (`cach`.last_update + `cach`.cache_lifetime * 60) < UNIX_TIMESTAMP() ORDER BY `cach`.last_update',
                         $dbm->cache_table_name, $dbm->streams_sources_table_name, $enabled, $streamId);
-                    if (!defined('WP_DEBUG') || !WP_DEBUG) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
                         $this->log(sprintf('Flow-Flow Debug: Refreshing feeds for stream %s with expired cache', $streamId));
                     }
                 }
@@ -355,7 +355,7 @@ abstract class LABase {
                     $use = $dbm->getGeneralSettings()->useCurlFollowLocation();
                     $debug_info['feeds_found'] = count($feeds);
                     
-                    if (!defined('WP_DEBUG') || !WP_DEBUG) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
                         $this->log(sprintf('Flow-Flow Debug: Found %d feeds to refresh', count($feeds)));
                     }
                     
@@ -439,7 +439,7 @@ abstract class LABase {
                                 $debug_info['feeds'][$feed_index]['end_time'] - 
                                 $debug_info['feeds'][$feed_index]['start_time'];
                             
-                            if (!defined('WP_DEBUG') || !WP_DEBUG) {
+                            if (defined('WP_DEBUG') && WP_DEBUG) {
                                 $this->log(sprintf('Flow-Flow Debug: Completed processing feed %s in %.4f seconds', 
                                     $feed_id, 
                                     $debug_info['feeds'][$feed_index]['duration']
@@ -448,14 +448,14 @@ abstract class LABase {
                         }
                     }
                 } else {
-                    if (!defined('WP_DEBUG') || !WP_DEBUG) {
+                    if (defined('WP_DEBUG') && WP_DEBUG) {
                         $this->log('Flow-Flow Debug: No feeds require refreshing at this time');
                     }
                 }
                 
                 $debug_info['execution_time'] = microtime(true) - $start_time;
                 
-                if (!defined('WP_DEBUG') || !WP_DEBUG) {
+                if (defined('WP_DEBUG') && WP_DEBUG) {
                     $this->log('Flow-Flow Debug: refreshCache completed in ' . number_format($debug_info['execution_time'], 4) . ' seconds');
                     $this->log('Flow-Flow Debug: ' . json_encode($debug_info, JSON_PRETTY_PRINT));
                 }
@@ -470,7 +470,7 @@ abstract class LABase {
             );
             $this->log($error_message);
             
-            if (!defined('WP_DEBUG') || !WP_DEBUG) {
+            if (defined('WP_DEBUG') && WP_DEBUG) {
                 $debug_info['error'] = [
                     'message' => $e->getMessage(),
                     'file' => $e->getFile(),
@@ -670,9 +670,10 @@ abstract class LABase {
 			
 			ob_start();
 			$css_version = isset($stream->last_changes) ? $stream->last_changes : '1.0';
-			$url = content_url() . '/resources/' . LAUtils::slug($context) . '/css/stream-id' . $stream->id . '.css';
+			$slug = (LAUtils::slug($context) === 'flow-flow-social-streams') ? 'flow-flow' : LAUtils::slug($context);
+			$url = content_url() . '/resources/' . $slug . '/css/stream-id' . $stream->id . '.css';
 			if (!is_main_site()){
-				$url = content_url() . '/resources/' . LAUtils::slug($context) . '/css/stream-id' . $stream->id . '-'. get_current_blog_id() . '.css';
+				$url = content_url() . '/resources/' . $slug . '/css/stream-id' . $stream->id . '-'. get_current_blog_id() . '.css';
 			}
 			
 			$escaped_url = function_exists('esc_url') ? esc_url($url) : htmlspecialchars($url, ENT_QUOTES, 'UTF-8');
@@ -847,9 +848,10 @@ abstract class LABase {
 		$instance = $clazz->newInstance();
 		$feed = $this->prepareFeed($feed, $this->generalSettings);
 
-		if (LASettingsUtils::YepNope2ClassicStyle($feed->boosted, false)){
-			$instance = new FFRemoteFeed($instance);
-		}
+		// Boosted remote feed logic disabled - process locally
+		// if (LASettingsUtils::YepNope2ClassicStyle($feed->boosted, false)){
+		// 	$instance = new FFRemoteFeed($instance);
+		// }
 
 		$instance->init($this->context, $feed);
 		return $instance;

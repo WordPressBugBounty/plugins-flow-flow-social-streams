@@ -616,41 +616,14 @@ abstract class LADBManager
             }
         }
 
-        $not_active = LAUtils::get_request_var('not_active', 'post', 'text', null);
-        if ($not_active !== null) {
-            // return dummy
-            $response = [
-                'status' => 'never_used', // 'active', 'cancelled', 'paused'
-                'plan' => 0,
-                'available' => 0,
-                'expire' => 0
-            ];
-            echo json_encode($response);
-            die();
-        }
-
-        if (null != ($token = $this->getToken())) {
-            $response = Request::post(FF_BOOST_SERVER . 'flow-flow/ff', [
-                'Content-Type: application/x-www-form-urlencoded'
-            ], http_build_query(['action' => 'get_subscription', 'token' => $token]));
-
-            if ($response->code == 200 && !empty($response->raw_body) && is_object($response->body)) {
-                $subscription = json_encode($response->body);
-                if (JSON_ERROR_NONE == json_last_error()) {
-                    // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-                    echo $subscription;
-                } else {
-                    // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log($response->raw_body);
-                }
-            } else if ($this->isExpiredToken($response)) {
-                $this->get_boosts();
-            } else {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log($response->raw_body);
-            }
-        }
-        die;
+        $response = [
+            'status' => 'never_used',
+            'plan' => 0,
+            'available' => 0,
+            'expire' => 0
+        ];
+        echo json_encode($response);
+        die();
     }
 
     /**
@@ -666,46 +639,6 @@ abstract class LADBManager
         $this->deleteOption('boosts_token');
         $this->deleteOption('boosts_subscription');
 
-        $domain = LAUtils::get_request_var('HTTP_HOST', 'server', 'text');
-
-        $url = FF_BOOST_SERVER . 'registration?shop=' . $domain;
-
-        $data = [
-            'action' => 'domain_registration',
-            'email' => $email,
-            'checkout_id' => $checkout_id,
-            'options' => $this->getOption('options', false, false, true),
-            'fb_auth_options' => $this->getOption('fb_auth_options', false, false, true),
-            'url' => get_site_url()
-        ];
-        global $wp_locale;
-        $data['wp_locale'] = json_encode($wp_locale);
-        $data['wp_timezone_string'] = get_option('timezone_string');
-        $data['wp_date_format'] = get_option('date_format');
-        $data['wp_time_format'] = get_option('time_format');
-        if (false != ($la_facebook_access_token = get_option('la_facebook_access_token', false))) {
-            $data['la_facebook_access_token'] = $la_facebook_access_token;
-        }
-        if (false != ($la_facebook_access_token_expires = get_option('la_facebook_access_token_expires', false))) {
-            $data['la_facebook_access_token_expires'] = $la_facebook_access_token_expires;
-        }
-        Request::jsonOpts(true);
-        Request::timeout(120);
-        $response = Request::post($url, [
-            'Content-Type: application/x-www-form-urlencoded'
-        ], http_build_query($data));
-
-        if ($response->code != 200) {
-            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($response->raw_body);
-            $this->deleteOption('boosts_email');
-            $this->deleteOption('boosts_checkout_id');
-            if ($response->code == 403 && isset($response->body['error']) && $response->body['error'] == 'Exceeded the limit on the number of domains') {
-                header('Location: ' . admin_url('admin.php?page=flow-flow-admin&subscription=exceeded_domains'), true, 301);
-                die();
-            }
-        }
-
         header('Location: ' . admin_url('admin.php?page=flow-flow-admin&subscription=1'), true, 301);
         die();
     }
@@ -715,29 +648,8 @@ abstract class LADBManager
      */
     public function upgradeSubscription()
     {
-        if (null != ($token = $this->getToken())) {
-            $plan_id = LAUtils::get_request_var('plan_id', 'request', 'text');
-            $response = Request::post(FF_BOOST_SERVER . 'flow-flow/ff', [
-                'Content-Type: application/x-www-form-urlencoded'
-            ], http_build_query(['action' => 'upgrade_subscription', 'token' => $token, 'plan_id' => $plan_id]));
-
-            if ($response->code == 200) {
-                $response->body = (array) $response->body;
-                if ($response->body['success']) {
-                    header('Location: ' . admin_url('admin.php?page=flow-flow-admin'), true, 301);
-                    die;
-                }
-            } else if ($this->isExpiredToken($response)) {
-                $this->upgradeSubscription();
-            } else {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log($response->raw_body);
-            }
-        }
-        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-        error_log('FLOW-FLOW DEBUG: no subscription token');
-        http_response_code(500);
-        die;
+        header('Location: ' . admin_url('admin.php?page=flow-flow-admin'), true, 301);
+        die();
     }
 
     /**
@@ -745,33 +657,13 @@ abstract class LADBManager
      */
     public function cancelSubscription()
     {
-        if (null != ($token = $this->getToken())) {
-            $response = Request::post(FF_BOOST_SERVER . 'flow-flow/ff', [
-                'Content-Type: application/x-www-form-urlencoded'
-            ], http_build_query(['action' => 'cancel_subscription', 'token' => $token]));
-
-            if ($response->code == 200) {
-                $response->body = (array) $response->body;
-                if ($response->body['success']) {
-                    $this->deleteOption('boosts_email');
-                    $this->deleteOption('boosts_token');
-                    $this->deleteOption('boosts_checkout_id');
-                    $this->deleteOption('boosts_subscription');
-                    $this->deleteBoostedFeeds();
-                    header('Location: ' . admin_url('admin.php?page=flow-flow-admin'), true, 301);
-                    die;
-                }
-            } else if ($this->isExpiredToken($response)) {
-                $this->cancelSubscription();
-            } else {
-                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                error_log($response->raw_body);
-            }
-        }
-        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-        error_log('FLOW-FLOW DEBUG: no subscription token');
-        http_response_code(500);
-        die;
+        $this->deleteOption('boosts_email');
+        $this->deleteOption('boosts_token');
+        $this->deleteOption('boosts_checkout_id');
+        $this->deleteOption('boosts_subscription');
+        $this->deleteBoostedFeeds();
+        header('Location: ' . admin_url('admin.php?page=flow-flow-admin'), true, 301);
+        die();
     }
 
     /**
@@ -1017,7 +909,8 @@ abstract class LADBManager
 
     public function canCreateCssFolder()
     {
-        $dir = WP_CONTENT_DIR . '/resources/' . $this->context['slug'] . '/css';
+        $slug = ($this->context['slug'] === 'flow-flow-social-streams') ? 'flow-flow' : $this->context['slug'];
+        $dir = WP_CONTENT_DIR . '/resources/' . $slug . '/css';
         if (!file_exists($dir)) {
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
             return mkdir($dir, 0777, true);
@@ -1027,7 +920,8 @@ abstract class LADBManager
 
     public function generateCss($stream)
     {
-        $dir = WP_CONTENT_DIR . '/resources/' . $this->context['slug'] . '/css';
+        $slug = ($this->context['slug'] === 'flow-flow-social-streams') ? 'flow-flow' : $this->context['slug'];
+        $dir = WP_CONTENT_DIR . '/resources/' . $slug . '/css';
         if (!file_exists($dir)) {
             // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_mkdir
             mkdir($dir, 0777, true);
@@ -1591,10 +1485,45 @@ abstract class LADBManager
             if ($count > $c_count) {
                 $feed = $row['feed_id'];
                 $count = $count - $c_count;
-                $sub_query = $conn->parse('select max(tmp.`post_timestamp`) from (select `post_timestamp` from ?n where `feed_id` = ?s order by `post_timestamp` limit 0, ?i) as tmp', $this->posts_table_name, $feed, $count);
-                $sub_query2 = $conn->parse('select tmp2.post_id from ?n as tmp2 where tmp2.post_timestamp <= (?p)', $this->posts_table_name, $sub_query);
-                $conn->query('delete from ?n where feed_id = ?s and post_id in (?p)', $this->post_media_table_name, $feed, $sub_query2);
-                $conn->query('delete from ?n where feed_id = ?s and post_timestamp <= (?p)', $this->posts_table_name, $feed, $sub_query);
+
+                // Safely load feed settings to check moderation rules
+                $moderation = false;
+                $pre_moderation = false;
+                $feed_row = $conn->getRow('SELECT `settings` FROM ?n WHERE `feed_id` = ?s', $this->cache_table_name, $feed);
+                if ($feed_row && !empty($feed_row['settings'])) {
+                    $settings = unserialize($feed_row['settings']);
+                    if (is_object($settings)) {
+                        $settings_arr = (array)$settings;
+                        if (isset($settings_arr['mod'])) {
+                            $moderation = LASettingsUtils::YepNope2ClassicStyle($settings_arr['mod'], false);
+                        }
+                        if ($moderation && isset($settings_arr['mod-approve'])) {
+                            $pre_moderation = !LASettingsUtils::YepNope2ClassicStyle($settings_arr['mod-approve'], false);
+                        }
+                    }
+                }
+
+                // Exclude pinned posts, disapproved posts, posts with custom Call-To-Action (CTA) elements,
+                // and approved posts in pre-moderation mode (where the default is 'new') from deletion candidates.
+                $safe_cond = $conn->parse(
+                    "`is_pinned` = 0 AND `post_status` != 'disapproved' AND (`post_additional` IS NULL OR `post_additional` NOT LIKE '%\"cta\"%') AND NOT (?i AND `post_status` = 'approved')",
+                    $pre_moderation ? 1 : 0
+                );
+
+                // Fetch IDs of the oldest safe-to-delete posts
+                $ids_to_delete = $conn->getCol(
+                    "SELECT `post_id` FROM ?n WHERE `feed_id` = ?s AND ?p ORDER BY `post_timestamp` ASC LIMIT ?i",
+                    $this->posts_table_name,
+                    $feed,
+                    $safe_cond,
+                    $count
+                );
+
+                if (!empty($ids_to_delete)) {
+                    $conn->query('DELETE FROM ?n WHERE `feed_id` = ?s AND `post_id` IN (?a)', $this->post_media_table_name, $feed, $ids_to_delete);
+                    $conn->query('DELETE FROM ?n WHERE `post_id` IN (?a)', $this->comments_table_name, $ids_to_delete);
+                    $conn->query('DELETE FROM ?n WHERE `feed_id` = ?s AND `post_id` IN (?a)', $this->posts_table_name, $feed, $ids_to_delete);
+                }
                 continue;
             }
         }
@@ -1802,23 +1731,6 @@ abstract class LADBManager
      */
     public function getBoostSources()
     {
-        $token = $this->getToken();
-        if (!empty($token)) {
-            Request::jsonOpts(true);
-            Request::timeout(120);
-            $response = Request::post(FF_BOOST_SERVER . 'flow-flow/ff', [
-                'Content-Type: application/x-www-form-urlencoded'
-            ], http_build_query(['action' => 'get_sources', 'token' => $token]));
-
-            if ($response->code == 200) {
-                foreach ($response->body as &$source) {
-                    LADB::prepareSource($source);
-                }
-                return $response->body;
-            } else if ($this->isExpiredToken($response)) {
-                return $this->getBoostSources();
-            }
-        }
         return [];
     }
 
@@ -1830,20 +1742,7 @@ abstract class LADBManager
      */
     private function proxyRequest($data)
     {
-        $response = [];
-        if (null != ($token = $this->getToken())) {
-            Request::jsonOpts(true);
-            Request::timeout(120);
-            $data['token'] = $token;
-            $response = Request::post(FF_BOOST_SERVER . 'flow-flow/ff', [
-                'Content-Type: application/x-www-form-urlencoded'
-            ], http_build_query($data));
-            if ($this->isExpiredToken($response)) {
-                $response = $this->proxyRequest($data);
-            }
-        }
-
-        return $response;
+        return [];
     }
 
     /**
@@ -1854,27 +1753,6 @@ abstract class LADBManager
      */
     public function getToken($force = false)
     {
-        $email = $this->getOption('boosts_email');
-        if (!empty($email)) {
-            $domain = LAUtils::get_request_var('HTTP_HOST', 'server', 'text');
-
-            $token = $this->getOption('boosts_token');
-            if ($force || (false == $token)) {
-                Request::jsonOpts(true);
-                Request::timeout(120);
-                $response = Request::post(FF_BOOST_SERVER . 'token', [
-                    'Content-Type: application/form-data'
-                ], ['domain' => $domain, 'email' => $email]);
-                if ($response->code == 200 && isset($response->body['token']) && is_string($response->body['token'])) {
-                    $token = $response->body['token'];
-                    $this->setOption('boosts_token', $token);
-                    $this->conn()->commit();
-                } else {
-                    return null;
-                }
-            }
-            return $token;
-        }
         return null;
     }
 

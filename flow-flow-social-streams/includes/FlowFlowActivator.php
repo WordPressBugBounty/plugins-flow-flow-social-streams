@@ -74,7 +74,7 @@ class FlowFlowActivator extends LAActivatorBase
             'plugin_basename' => function_exists('plugin_basename') ? plugin_basename($file) : basename(dirname($file)) . '/' . basename($file),
             'admin_url' => admin_url('admin-ajax.php'),
             'table_name_prefix' => $wpdb->prefix . 'ff_',
-            'version' => '5.0.3',
+            'version' => '5.0.5',
             'faq_url' => 'https://docs.social-streams.com/',
             'count_posts_4init' => 30
         ];
@@ -133,10 +133,6 @@ class FlowFlowActivator extends LAActivatorBase
                 $this->setContextValue('ajax_url', plugins_url('ff.php', __FILE__));
             } else {
                 $this->setContextValue('ajax_url', admin_url('admin-ajax.php'));
-            }
-
-            if (defined('FF_BOOST_SERVER') && !empty(FF_BOOST_SERVER)) {
-                $this->setContextValue('public_url', FF_BOOST_SERVER . 'flow-flow/ff');
             }
         }
 

@@ -22,9 +22,6 @@ $options = (isset($context['options']) && is_array($context['options'])) ? $cont
 $auth = (isset($context['auth_options']) && is_array($context['auth_options'])) ? $context['auth_options'] : array();
 $auth['facebook_access_token'] = isset($auth['facebook_access_token']) ? $auth['facebook_access_token'] : '';
 
-if (defined('FF_USE_WP') && FF_USE_WP && function_exists('set_transient') && function_exists('get_current_user_id')) {
-    set_transient('flow_flow_auth_pending_' . get_current_user_id(), true, 15 * MINUTE_IN_SECONDS);
-}
 
 $fb_own_app = la\core\settings\LASettingsUtils::YepNope2ClassicStyleSafe($auth, 'facebook_use_own_app', false);
 //$facebook_long_life_token = $context['facebook_long_life_token'];

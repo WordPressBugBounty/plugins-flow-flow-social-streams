@@ -6,68 +6,60 @@ License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Tags: instagram feed, facebook feed, embed instagram, instagram widget, instagram gallery
 Requires at least: 5.0
 Tested up to: 7.0
-Stable tag: 5.0.3
+Stable tag: 5.0.5
 
-Display a mix of custom Facebook feed, Instagram feed, X (Twitter) feed in grid gallery or widget.
+Display a mix of custom Facebook, Instagram, TikTok, YouTube, X (Twitter) and RSS feeds in grid gallery or widget.
 
 == Description ==
 
-Flow-Flow — WordPress Facebook Instagram X (Twitter) Feed Grid Gallery is a multipurpose **social media wall** plugin that allows to display a mix of social media feeds in beautiful responsive galleries and widgets. Embedding user generated content (UGC) from multiple sources is a great way to add social proof to your WordPress website and increase your brand presence and boost your conversions. User behavior researches show that over 70% users won’t buy from you if you don’t have reviews or social proof of any kind.
+Flow-Flow — WordPress Social Stream Grid Gallery is a multipurpose **social media wall** plugin that allows you to display a mix of social media feeds in beautiful responsive galleries and widgets. Embedding user-generated content (UGC) from multiple sources is a great way to add social proof to your WordPress website, increase your brand presence, and boost your conversions. Research shows that over 70% of visitors won't buy without reviews or social proof of any kind.
 
 [Check out PRO demo](https://social-streams.com/flow/demo/ "Flow-Flow PRO Demo")
 
 = Features =
 
-* 3 social networks in Lite version: Facebook, Instagram, X (Twitter)
-* Smart caching
-* AJAX loading and PageSpeed optimized
-* User-friendly admin
+* Social networks & sources: Facebook, Instagram, X (Twitter), TikTok, YouTube, RSS & ATOM feeds
+* Smart background caching for ultra-fast page load speeds
+* PageSpeed optimized with AJAX loading and infinite scrolling
+* User-friendly admin interface with live stream editor
 * Easy one-click API authentication for Instagram and Facebook
-* Fast CSS3 transitions and animations
-* Hardware accelerated CSS3 3D Transforms
-* Smart loading assets
-* Optimized for any screen sizes and Touch Devices
-* Responsive layout and advanced responsiveness settings
-* Social media counters like comments, likes, views
-* Sharing buttons to increase user engagement
-* Rich design settings
-* Networks sorting and search bar on top of your stream
-* Loading more posts to grid via AJAX
-* Exclude posts by words, usernames or URLs
-* Drag & Drop grid card builder
-* Powerful plugin extensions
-* Translate ready
-* Multisite compatible
-* Well documented
+* Fast CSS3 transitions and hardware-accelerated 3D transforms
+* Fully responsive layout with mobile touch optimization
+* Social media engagement counters (comments, likes, views)
+* Built-in social sharing buttons to boost visitor interaction
+* Network sorting, live search bar, and post exclusion rules (by words, usernames, or URLs)
+* Drag & drop grid card builder with rich styling controls
+* Complete privacy & security: API tokens and credentials are processed server-side and never exposed to browsers
+* Powerful plugin extensions supported
+* Translation ready, Multisite compatible, and well documented
 
-All extensions are compatible and work with Lite edition of Flow-Flow. [Learn more](http://docs.social-streams.com/article/44-install-flow-wp-extensions "Learn more")
+All extensions are compatible and work with the Lite edition of Flow-Flow. [Learn more](http://docs.social-streams.com/article/44-install-flow-wp-extensions "Learn more")
 
-Looking for other sources like other social networks, WordPress posts and RSS? More sources and tons of fantastic features are available in PRO version! [Check out comparison table](https://social-streams.com/flow/#pricing "Flow-Flow Pricing")
+Looking for additional sources like LinkedIn, Pinterest, WordPress posts, or advanced moderation? More sources and tons of fantastic features are available in the PRO version! [Check out comparison table](https://social-streams.com/flow/#pricing "Flow-Flow Pricing")
 
-= PRO version features =
-* More sources to stream. In total 14 networks including Google+, YouTube, LinkedIn, Tumblr, Soundcloud, Vine, Dribbble, Flickr and others + WordPress posts and RSS feeds. [Full list of sources](https://social-streams.com/flow/#socialfeeds "Flow-Flow Social Feeds")
-* Fast professional support for premium users
-* Additional stream layouts: boxed/justified galleries, fixed-height grid
-* Smart & beautiful lightbox with comments for Facebook, Instagram, Youtube. Classic popup and infinite feed. Available on mobiles also
-* Pre-moderation posts approval system
-* Filters for feeds (include and exclude only by words, usernames, URLs)
-* Lightbox galleries for multi image post
-* Networks sorting and search bar on top of your stream
-* Database snapshots
+= PRO Version Features =
+
+* 14+ social networks supported: TikTok, YouTube (with @handle support), LinkedIn, Pinterest, Facebook, Instagram, X (Twitter), Tumblr, SoundCloud, Vimeo, Dribbble, Flickr, WordPress posts, and RSS feeds. [Full list of sources](https://social-streams.com/flow/#socialfeeds "Flow-Flow Social Feeds")
+* Priority support for premium users
+* Additional stream layouts: Boxed/Justified galleries, Carousel/Slider, Fixed-height grid
+* Interactive Lightbox modal with comments support for Facebook, Instagram, YouTube
+* Pre-moderation post approval workflow
+* Advanced feed filters (include/exclude by keywords, usernames, URLs)
+* Database snapshots and automated token management
 
 Upgrade to PRO! [Check out comparison table](https://social-streams.com/flow/#pricing "Flow-Flow Pricing")
 
 = Performance and Security =
 
-Smart caching with server task allows to deliver content blazingly fast without long page loading. It's especially crucial when many networks are pulled or you have big traffic. It's great to use this plugin for streaming your news, photos, reviews and any other content you can imagine!
+Smart caching with background server tasks delivers content blazingly fast without slowing down page rendering. It's especially crucial when pulling multiple social networks or handling high website traffic.
 
-Plugin doesn't expose your private details (like tokens, app IDs and app secrets) to browser so we provide 100% security for any sensitive data.
+The plugin never exposes your private API credentials (tokens, App IDs, App Secrets) to client-side browsers, ensuring 100% security for sensitive data.
 
-= How it works =
+= How It Works =
 
-You create streams in Flow-Flow WordPress Social Stream admin and copy generated shortcodes. Then you put these shortcodes in any block on any page of your site. When social stream is shown first time, it's got cached (takes more time for initial caching but then it will show blazingly fast) and rest of visitors see this cache for cache lifetime. So for example if you have set 20 min cache and 10000 users visit your site within these 20 min, it's **only one time** plugin will request API to pull data, for the rest of time users will see cached data almost instantly. Considering that server runs cache renew task in background it guarantees plugin's amazing performance.
+You create streams in the Flow-Flow WordPress Social Stream admin and paste the generated shortcode into any page or post. When a social stream is loaded for the first time, it gets cached in the background. Subsequent visitors see cached data almost instantly. Cache renewal tasks run seamlessly in the background, ensuring maximum performance without impacting site speed.
 
-Looking for even more? More sources and tons of fantastic features are available in PRO version! [Check out Live demo](https://social-streams.com/flow/demo/ "Flow-Flow Pro Demo")
+Looking for even more? More sources and tons of fantastic features are available in the PRO version! [Check out Live demo](https://social-streams.com/flow/demo/ "Flow-Flow Pro Demo")
 
 == Installation ==
 
@@ -133,6 +125,14 @@ Flow-Flow Lite edition is distributed "as is" and doesn't contain support servic
 4. Adding source popup
 
 == Changelog ==
+
+= Version 5.0.5 =
+* New: Alternative caching mode to bypass API requests on frontend calls.
+* Fix: Security hardening and admin view sanitization.
+
+= Version 5.0.4 =
+* Fix: Compatibility and schema migration fixes from 4.x versions.
+* Improvement: General stream loading and UI performance improvements.
 
 = Version 5.0.3 =
 * Fix: Feeds updating

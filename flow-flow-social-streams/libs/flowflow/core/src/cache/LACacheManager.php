@@ -541,6 +541,24 @@ class LACacheManager implements LACache{
 			$post->media = ['url' => $row['media_url'], 'width' => $row['media_width'], 'height' => $row['media_height'], 'type' => $row['media_type']];
 		}
 		$post->additional = json_decode($row['post_additional']);
+		
+		// Extract pinned status
+		if (isset($row['is_pinned'])) {
+			$post->pinned = $row['is_pinned'];
+		}
+		if (isset($row['pinned_order'])) {
+			$post->pinned_order = $row['pinned_order'];
+		}
+		
+		// Extract CTA data to top-level for frontend compatibility
+		if (isset($post->additional)) {
+			if (is_object($post->additional) && isset($post->additional->cta)) {
+				$post->cta = $post->additional->cta;
+			} else if (is_array($post->additional) && isset($post->additional['cta'])) {
+				$post->cta = (object)$post->additional['cta'];
+			}
+		}
+
 		$post->carousel_size = $row['carousel_size'];
 		return $post;
 	}
