@@ -100,8 +100,13 @@ $js_opts = [
     'refresh_nonce' => wp_create_nonce('ff_refresh_feeds'),
     'engage_nonce' => wp_create_nonce('ff_engagement')
 ];
-if ($admin) {
+// The admin nonce authorizes plugin settings endpoints, so moderators get only
+// a moderation nonce.
+if (FF_USE_WP && current_user_can('manage_options')) {
     $js_opts['flow_flow_nonce'] = wp_create_nonce('flow_flow_nonce');
+}
+if ($admin && FF_USE_WP) {
+    $js_opts['moderation_nonce'] = wp_create_nonce('flow_flow_moderation');
 }
 $js_opts['token'] = ($admin && $moderation) ? $context['token'] : '';
 ?>
@@ -148,6 +153,8 @@ $js_config = [
     window.flow_flow_streams = window.flow_flow_streams || [];
     window.flow_flow_streams.push(<?php echo json_encode($js_config); ?>);
 </script>
+
+<?php do_action('ff_add_view_action', $stream); ?>
 
 <?php 
 // Only output stream-loader.js once per page to prevent the IIFE from re-processing

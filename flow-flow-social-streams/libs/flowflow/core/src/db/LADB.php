@@ -27,9 +27,9 @@ class LADB {
 				var_dump($e);
 			}
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log($e->getMessage());
+			\la\core\LAUtils::errorLog($e->getMessage());
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log($e->getTraceAsString());
+			\la\core\LAUtils::errorLog($e->getTraceAsString());
 			die();
 		}
 		// @codeCoverageIgnoreEnd
@@ -299,7 +299,7 @@ class LADB {
      *
      * @throws Exception
      */
-    public static function setStream($conn, $streams_table_name, $streams_sources_table_name, $id, $stream){
+    public static function setStream($conn, $streams_table_name, $streams_sources_table_name, $id, $stream, $commit = true){
 		self::$cache[$id] = clone $stream;
 		$name = @$stream->name;
 		$originalFeed = $stream->feeds;
@@ -345,16 +345,16 @@ class LADB {
 				$streams_sources_table_name, $id, $sql_part ) ) {
 			throw new Exception();
 		}
-        $conn->commit();
+        if ($commit) $conn->commit();
 	}
 
 	public static function deleteStream($conn, $streams_table_name, $streams_sources_table_name, $id){
 		unset(self::$cache[$id]);
 		if (false === $conn->query('DELETE FROM ?n WHERE `id`=?s', $streams_table_name, $id)){
-			return new Exception();
+			throw new Exception('Could not delete stream');
 		}
 		if (false === $conn->query('DELETE FROM ?n WHERE `stream_id`=?s', $streams_sources_table_name, $id)){
-			return new Exception();
+			throw new Exception('Could not delete stream sources');
 		}
 		return true;
 	}

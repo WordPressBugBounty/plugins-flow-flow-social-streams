@@ -47,6 +47,22 @@ function __delete_custom_file_directory() {
 		}
 		rmdir($directory);
 	}
+	if (function_exists('wp_upload_dir')) {
+		$uploads = wp_upload_dir();
+		if (is_array($uploads) && empty($uploads['error'])) {
+			$directory = $uploads['basedir'] . '/flow-flow/linkedin/';
+			if (is_dir($directory)) {
+				foreach(glob($directory.'*.*') as $v){
+					unlink($v);
+				}
+				rmdir($directory);
+			}
+			$parent = $uploads['basedir'] . '/flow-flow/';
+			if (is_dir($parent)) {
+				@rmdir($parent);
+			}
+		}
+	}
 }
 
 function __clean_db() {

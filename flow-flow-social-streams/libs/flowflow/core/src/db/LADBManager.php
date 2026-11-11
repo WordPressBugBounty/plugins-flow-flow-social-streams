@@ -2,6 +2,7 @@
 namespace la\core\db;
 
 use Exception;
+use la\core\cache\LACacheManager;
 use la\core\cache\LATransientCache;
 use la\core\LAUtils;
 use la\core\settings\LAGeneralSettings;
@@ -73,43 +74,32 @@ abstract class LADBManager
 
     public function conn($reopen = false)
     {
-        // Recreate connection when explicitly requested, missing, or closed
-        if ($reopen || $this->conn == null) {
-            if ($this->conn != null) {
-                try {
-                    $this->conn->close();
-                } catch (\Throwable $e) {
-                    // Ignore close errors
-                }
-            }
-            $this->conn = LADB::create();
-            $this->conn->autocommit(true);
-            return $this->conn;
-        }
-
-        // If mysqli handle is closed, reopen transparently
-        try {
-            if (method_exists($this->conn, 'getMySQLi')) {
+        if ($this->conn !== null && (!$reopen || $this->conn->inTransaction())) {
+            try {
                 $mysqli = $this->conn->getMySQLi();
-                if (!($mysqli && @$mysqli->ping())) {
-                    // Connection is dead, no need to close
-                    $this->conn = LADB::create();
-                    $this->conn->autocommit(true);
+                $threadId = $mysqli ? $mysqli->thread_id : null;
+                // Even an explicit reopen must preserve a healthy transaction.
+                if ($mysqli && @$mysqli->ping()) {
+                    // Older mysqli can reconnect inside ping(). Its fresh
+                    // session must never be mistaken for the old transaction.
+                    if ($mysqli->thread_id !== $threadId) {
+                        if ($this->conn->inTransaction()) throw new Exception('Database transaction connection was replaced');
+                        if ($this->conn->autocommit(true) === false) throw new Exception('Could not reset reconnected database session');
+                    }
+                    return $this->conn;
                 }
+            } catch (\Throwable $error) {
+                // Check transaction ownership before replacing a dead handle.
             }
-        } catch (\Throwable $e) {
-            // Any failure means we should recreate the connection
-            if ($this->conn != null) {
-                try {
-                    $this->conn->close();
-                } catch (\Throwable $e) {
-                    // Ignore close errors
-                }
-            }
-            $this->conn = LADB::create();
-            $this->conn->autocommit(true);
         }
-
+        if ($this->conn !== null) {
+            if ($this->conn->inTransaction()) {
+                throw new Exception('Cannot replace a database connection during an active transaction');
+            }
+            try { $this->conn->close(); } catch (\Throwable $ignored) {}
+        }
+        $this->conn = LADB::create();
+        $this->conn->autocommit(true);
         return $this->conn;
     }
 
@@ -313,7 +303,7 @@ abstract class LADBManager
                                 }
                                 $this->modifySource($source, $changed_content);
                                 if ($source['enabled'] == 'yep') {
-                                    $this->refreshCache4Source($feed['id'], false, $boosted);
+                                    $this->refreshSourceAfterSettings($feed['id'], false, $boosted);
                                 }
                                 break;
                             case 'created':
@@ -322,7 +312,7 @@ abstract class LADBManager
                                 if (!$boosted) {
                                     $boosted = LASettingsUtils::YepNope2ClassicStyle($source['boosted'], false);
                                 }
-                                $this->refreshCache4Source($feed['id'], true, $boosted);
+                                $this->refreshSourceAfterSettings($feed['id'], true, $boosted);
                                 break;
                             case 'reset_cache':
                                 $source = $model['feeds'][$feed['id']];
@@ -330,7 +320,7 @@ abstract class LADBManager
                                 if (!$boosted) {
                                     $boosted = LASettingsUtils::YepNope2ClassicStyle($source['boosted'], false);
                                 }
-                                $this->refreshCache4Source($feed['id'], true, $boosted);
+                                $this->refreshSourceAfterSettings($feed['id'], true, $boosted);
                                 break;
                             case 'deleted':
                                 $sources = LADB::sources($this->conn(), $this->cache_table_name, $this->streams_sources_table_name);
@@ -345,8 +335,6 @@ abstract class LADBManager
                         }
                     }
                     
-                    // Invalidate transient cache when feeds change
-                    LATransientCache::invalidateAll();
                 }
 
                 if ($boosted) {
@@ -388,16 +376,18 @@ abstract class LADBManager
                 }
                 die();
             }
-        } catch (Exception $e) {
-            $this->conn()->rollbackAndClose();
+        } catch (\Throwable $e) {
+            try {
+                if ($this->conn !== null) $this->conn->rollbackAndClose();
+            } catch (\Throwable $ignored) {}
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('save_sources_settings error:');
+            \la\core\LAUtils::errorLog('save_sources_settings error:');
             $msg = $e->getMessage();
             if (strpos($msg, "doesn't exist") !== false || strpos($msg, "Unknown column") !== false || strpos($msg, "Data too long") !== false) {
                 $this->repairDB();
             }
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($msg);
+            \la\core\LAUtils::errorLog($msg);
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
             die(esc_html($msg));
         }
@@ -431,28 +421,28 @@ abstract class LADBManager
             $stream->last_changes = time();
             LADB::setStream($conn, $this->streams_table_name, $this->streams_sources_table_name, $stream->id, $stream);
 
-            // Invalidate transient cache for this stream
-            LATransientCache::invalidateStream($stream->id);
-
             $this->generateCss($stream);
 
+            if ($conn->commit() === false) {
+                throw new Exception('Could not commit stream settings');
+            }
+            LATransientCache::invalidateStream($stream->id);
             echo json_encode($stream);
-            $conn->commit();
 
             // phpcs:ignore WordPress.Security.NonceVerification.Missing
             $this->proxyRequest($_POST);
         } catch (Exception $e) {
             $conn->rollbackAndClose();
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('save_stream_settings error:');
+            \la\core\LAUtils::errorLog('save_stream_settings error:');
             $msg = $e->getMessage();
             if (strpos($msg, "doesn't exist") !== false || strpos($msg, "Unknown column") !== false || strpos($msg, "Data too long") !== false) {
                 $this->repairDB();
             }
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($msg);
+            \la\core\LAUtils::errorLog($msg);
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($e->getTraceAsString());
+            \la\core\LAUtils::errorLog($e->getTraceAsString());
         }
         $conn->close();
         die();
@@ -483,7 +473,10 @@ abstract class LADBManager
 
             $settings = $this->saveGeneralSettings($settings);
 
-            $conn->commit();
+            if ($conn->commit() === false) {
+                throw new Exception('Could not commit general settings');
+            }
+            LATransientCache::invalidateAll();
 
             global $wp_locale;
             $_POST['wp_locale'] = json_encode($wp_locale);
@@ -509,8 +502,9 @@ abstract class LADBManager
 
             echo json_encode($response);
         } catch (Exception $e) {
+            $conn->rollbackAndClose();
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('ff_save_settings_fn error:');
+            \la\core\LAUtils::errorLog('ff_save_settings_fn error:');
             $msg = $e->getMessage();
 
             if (strpos($msg, "doesn't exist") !== false || strpos($msg, "Unknown column") !== false || strpos($msg, "Data too long") !== false) {
@@ -522,9 +516,9 @@ abstract class LADBManager
             }
 
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($msg);
+            \la\core\LAUtils::errorLog($msg);
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($e->getTraceAsString());
+            \la\core\LAUtils::errorLog($e->getTraceAsString());
             die(esc_html($e->getMessage()));
         }
         $conn->close();
@@ -631,6 +625,7 @@ abstract class LADBManager
      */
     public function paymentSuccess()
     {
+        $this->requireSubscriptionAdmin();
         $email = LAUtils::get_request_var('email', 'request', 'email');
         $checkout_id = LAUtils::get_request_var('checkout_id', 'request', 'text');
 
@@ -657,6 +652,7 @@ abstract class LADBManager
      */
     public function cancelSubscription()
     {
+        $this->requireSubscriptionAdmin();
         $this->deleteOption('boosts_email');
         $this->deleteOption('boosts_token');
         $this->deleteOption('boosts_checkout_id');
@@ -671,6 +667,7 @@ abstract class LADBManager
      */
     public function clearSubscriptionCache()
     {
+        $this->requireSubscriptionAdmin();
         $email = LAUtils::get_request_var('email', 'request', 'email', null);
         if ($email !== null) {
             $this->setOption('boosts_email', $email);
@@ -682,6 +679,16 @@ abstract class LADBManager
         $this->deleteOption('boosts_token');
         $this->deleteOption('boosts_subscription');
         die;
+    }
+
+    /**
+     * Subscription handlers change stored state from GET links, so they need an administrator and a nonce.
+     */
+    private function requireSubscriptionAdmin()
+    {
+        if (FF_USE_WP && (!current_user_can('manage_options') || !check_ajax_referer('flow_flow_nonce', 'security', false))) {
+            wp_die('You are not allowed to change the subscription.', '', 403);
+        }
     }
 
     public final function email_notification()
@@ -717,23 +724,26 @@ abstract class LADBManager
                         $conn->commit();
                     } catch (Exception $e) {
                         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                        error_log('email_notification');
+                        \la\core\LAUtils::errorLog('email_notification');
                         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                        error_log($e->getMessage());
+                        \la\core\LAUtils::errorLog($e->getMessage());
                         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                        error_log($e->getTraceAsString());
+                        \la\core\LAUtils::errorLog($e->getTraceAsString());
                         $conn->rollbackAndClose();
                     }
                 } else {
                     $errorMessage = error_get_last();
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    error_log($errorMessage['message']);
+                    \la\core\LAUtils::errorLog($errorMessage['message']);
                 }
             }
         }
     }
 
-    public function modifySource($source, $changed_content = true, $with_errors = false)
+    /**
+     * @param bool $commit False joins the caller's transaction: failures throw and nothing is committed.
+     */
+    public function modifySource($source, $changed_content = true, $with_errors = false, $commit = true)
     {
         $this->debugLog('modifySource called', ['source' => $source, 'changed_content' => $changed_content]);
         $errors = '';
@@ -789,10 +799,15 @@ abstract class LADBManager
                     $up
                 )
             ) {
-                throw new Exception();
+                throw new Exception('Could not save source ' . $id);
             }
-            $conn->commit();
+            if (!$commit) return;
+            if ($conn->commit() === false) {
+                throw new Exception('Could not commit source changes');
+            }
+            LATransientCache::invalidateAll();
         } catch (Exception $e) {
+            if (!$commit) throw $e;
             $conn->rollback();
             $this->debugLog('modifySource exception', $e->getMessage());
         }
@@ -889,15 +904,18 @@ abstract class LADBManager
             LADB::deleteStream($conn, $this->streams_table_name, $this->streams_sources_table_name, $id);
             // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound
             do_action('ff_after_delete_stream', $id);
-            $conn->commit();
+            if ($conn->commit() === false) {
+                throw new Exception('Could not commit stream deletion');
+            }
+            LATransientCache::invalidateStream($id);
 
             $this->proxyRequest($_POST);
         } catch (Exception $e) {
             $msg = $e->getMessage();
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($msg);
+            \la\core\LAUtils::errorLog($msg);
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($e->getTraceAsString());
+            \la\core\LAUtils::errorLog($e->getTraceAsString());
             $conn->rollbackAndClose();
             if (strpos($msg, "doesn't exist") !== false || strpos($msg, "Unknown column") !== false || strpos($msg, "Data too long") !== false) {
                 $this->repairDB();
@@ -982,15 +1000,15 @@ abstract class LADBManager
         } catch (Exception $e) {
             $conn->rollbackAndClose();
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('clone_stream error:');
+            \la\core\LAUtils::errorLog('clone_stream error:');
             $msg = $e->getMessage();
             if (strpos($msg, "doesn't exist") !== false || strpos($msg, "Unknown column") !== false || strpos($msg, "Data too long") !== false) {
                 $this->repairDB();
             }
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($msg);
+            \la\core\LAUtils::errorLog($msg);
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($e->getTraceAsString());
+            \la\core\LAUtils::errorLog($e->getTraceAsString());
         }
         $conn->close();
         die();
@@ -1027,36 +1045,81 @@ abstract class LADBManager
 
     protected abstract function refreshCache($streamId, $force_load_cache = false);
 
+    private function refreshSourceAfterSettings($id, $force, $boosted)
+    {
+        try {
+            return $this->refreshCache4Source($id, $force, $boosted);
+        } catch (\Throwable $error) {
+            // Settings are already committed. A provider dispatch failure must
+            // not prevent the remaining source changes or their JSON response.
+            \la\core\LAUtils::errorLog('Flow-Flow source refresh failed for ' . $id . ': ' . $error->getMessage());
+            return false;
+        }
+    }
+
     protected function refreshCache4Source($id, $force_load_cache = false, $boosted = false)
     {
-        $this->debugLog('refreshCache4Source called', ['id' => $id, 'force' => $force_load_cache, 'boosted' => $boosted]);
-        if (!$boosted) {
-            $this->saveSource($id, ['status' => '2']);
-
-            // Direct invocation instead of HTTP request to self     
-            try {
-                // Set up request parameters that would normally come from AJAX
-                $_REQUEST['feed_id'] = $id;
-                $_REQUEST['force'] = $force_load_cache;
-                
-                // Get LABase instance and call processAjaxRequestBackground directly
-                $base = \la\core\LABase::get_instance($this->context);
-                $base->processAjaxRequestBackground(true, false);
-                
-                // Clean up request parameters
-                unset($_REQUEST['feed_id']);
-                unset($_REQUEST['force']);
-            } catch (Exception $direct_exception) {
-                // Fallback to HTTP request if direct call fails
-                
-                $useIpv4 = $this->getGeneralSettings()->useIPv4();
-                $use = $this->getGeneralSettings()->useCurlFollowLocation();
-                $url = $this->getLoadCacheUrl($id, $force_load_cache);
-                              
-                $this->debugLog('refreshCache4Source triggering URL', $url);
-                LASettingsUtils::get($url, 1, false, false, $use, $useIpv4);
+        if ($boosted) return false;
+        $request = $_REQUEST;
+        $forceRefresh = LACacheManager::$forceRefresh;
+        $conn = null;
+        try {
+            $conn = $this->conn();
+            $previousStatus = $conn->getOne('SELECT `status` FROM ?n WHERE `feed_id` = ?s', $this->cache_table_name, $id);
+            // Callers commit their settings changes before dispatching a
+            // refresh. Finish the marker transaction before provider reads.
+            if ($this->saveSource($id, ['status' => '2']) === false || $conn->commit() === false || $conn->autocommit(true) === false) {
+                throw new Exception('Could not start source refresh');
             }
+            $_REQUEST['feed_id'] = $id;
+            unset($_REQUEST['force'], $_REQUEST['stream_id']);
+            LACacheManager::$forceRefresh = (bool)$force_load_cache;
+            $base = \la\core\LABase::get_instance($this->context);
+            $base->processAjaxRequestBackground(true, false);
+            $this->restoreRefreshMarker($id, $previousStatus);
+            return true;
+        } catch (\Throwable $error) {
+            // Dispatch can fail before posts() starts or after it commits. Use
+            // the current physical handle, which the dispatcher may replace.
+            try {
+                $failedConnection = $this->conn !== null ? $this->conn : $conn;
+                if ($failedConnection) $failedConnection->rollbackAndClose();
+            } catch (\Throwable $ignored) {}
+            try {
+                $conn = $this->conn();
+                $status = ['status' => 0, 'error_timestamp' => time(),
+                    'errors' => serialize([['type' => 'refresh', 'message' => $error->getMessage(), 'code' => $error->getCode()]])];
+                if ($conn->beginTransaction() === false || $conn->query(
+                    'UPDATE ?n SET ?u WHERE `feed_id` = ?s AND `status` = 2', $this->cache_table_name, $status, $id
+                ) === false) throw new Exception('Could not record source dispatch failure');
+                $changed = $conn->affectedRows() > 0;
+                if ($conn->commit() === false) throw new Exception('Could not commit source dispatch failure');
+                if ($changed) LATransientCache::invalidateAll();
+            } catch (\Throwable $statusError) {
+                try { if ($conn) $conn->rollback(); } catch (\Throwable $ignored) {}
+                \la\core\LAUtils::errorLog('Flow-Flow could not record source refresh failure: ' . $statusError->getMessage());
+            }
+            throw $error;
+        } finally {
+            $_REQUEST = $request;
+            LACacheManager::$forceRefresh = $forceRefresh;
         }
+    }
+
+    /**
+     * A dispatch that skipped the feed (cache still fresh, or another refresh
+     * holds its lock) leaves the marker behind. Put the previous status back.
+     */
+    private function restoreRefreshMarker($id, $previousStatus)
+    {
+        $status = in_array((string)$previousStatus, ['0', '1'], true) ? (string)$previousStatus : '1';
+        $conn = $this->conn();
+        if ($conn->beginTransaction() === false) throw new Exception('Could not restore source status');
+        $current = $conn->getOne('SELECT `status` FROM ?n WHERE `feed_id` = ?s FOR UPDATE', $this->cache_table_name, $id);
+        $changed = (string)$current === '2';
+        if ($changed && $this->saveSource($id, ['status' => $status]) === false) throw new Exception('Could not restore source status');
+        if ($conn->commit() === false) throw new Exception('Could not commit source status');
+        if ($changed) LATransientCache::invalidateAll();
     }
 
     /**
@@ -1083,15 +1146,25 @@ abstract class LADBManager
     }
 
     //TODO: refactor posts table does not have field with name stream_id
-    public function clean(?array $streams = null)
+    public function clean(?array $streams = null, $commit = true)
     {
         $conn = $this->conn();
         $partOfSql = $streams == null ? '' : $conn->parse('WHERE `stream_id` IN (?a)', $streams);
+        if (!$commit) {
+            if ($conn->query('DELETE FROM ?n ?p', $this->posts_table_name, $partOfSql) === false
+                || $conn->query('DELETE FROM ?n', $this->image_cache_table_name) === false) {
+                throw new Exception('Could not clean cached posts');
+            }
+            return;
+        }
         try {
             if ($conn->beginTransaction()) {
                 $conn->query('DELETE FROM ?n ?p', $this->posts_table_name, $partOfSql);
                 $conn->query('DELETE FROM ?n', $this->image_cache_table_name);
-                $conn->commit();
+                if ($conn->commit() === false) {
+                    throw new Exception('Could not commit source changes');
+                }
+                LATransientCache::invalidateAll();
             }
             $conn->rollback();
         } catch (Exception $e) {
@@ -1100,9 +1173,16 @@ abstract class LADBManager
     }
 
 
-    public function deleteFeed($feedId)
+    public function deleteFeed($feedId, $commit = true)
     {
         $conn = $this->conn();
+        if (!$commit) {
+            $partOfSql = $conn->parse('WHERE `feed_id` = ?s', $feedId);
+            foreach ([$this->posts_table_name, $this->post_media_table_name, $this->cache_table_name, $this->streams_sources_table_name] as $table) {
+                if ($conn->query('DELETE FROM ?n ?p', $table, $partOfSql) === false) throw new Exception('Could not delete source ' . $feedId);
+            }
+            return;
+        }
         try {
             if ($conn->beginTransaction()) {
                 $partOfSql = $conn->parse('WHERE `feed_id` = ?s', $feedId);
@@ -1110,7 +1190,10 @@ abstract class LADBManager
                 $conn->query('DELETE FROM ?n ?p', $this->post_media_table_name, $partOfSql);
                 $conn->query('DELETE FROM ?n ?p', $this->cache_table_name, $partOfSql);
                 $conn->query('DELETE FROM ?n ?p', $this->streams_sources_table_name, $partOfSql);
-                $conn->commit();
+                if ($conn->commit() === false) {
+                    throw new Exception('Could not commit source changes');
+                }
+                LATransientCache::invalidateAll();
             }
             $conn->rollback();
         } catch (Exception $e) {
@@ -1127,7 +1210,10 @@ abstract class LADBManager
                 $conn->query('DELETE FROM ?n ?p', $this->posts_table_name, $partOfSql);
                 $conn->query('DELETE FROM ?n ?p', $this->post_media_table_name, $partOfSql);
                 $this->setCacheInfo($feedId, ['last_update' => 0, 'status' => 0]);
-                $conn->commit();
+                if ($conn->commit() === false) {
+                    throw new Exception('Could not commit source changes');
+                }
+                LATransientCache::invalidateAll();
             }
             $conn->rollback();
         } catch (Exception $e) {
@@ -1144,7 +1230,10 @@ abstract class LADBManager
                 if (!empty($feeds)) {
                     $conn->query("DELETE FROM ?n WHERE `feed_id` IN (?a)", $this->posts_table_name, $feeds);
                     $conn->query("DELETE FROM ?n WHERE `feed_id` IN (?a)", $this->post_media_table_name, $feeds);
-                    $conn->commit();
+                    if ($conn->commit() === false) {
+                        throw new Exception('Could not commit source changes');
+                    }
+                    LATransientCache::invalidateAll();
                 }
             }
             $conn->rollback();
@@ -1159,8 +1248,10 @@ abstract class LADBManager
         try {
             if ($conn->beginTransaction()) {
                 $feeds = $conn->getCol('SELECT DISTINCT `feed_id` FROM ?n WHERE `post_type` = ?s', $this->posts_table_name, $feedType);
-                
+                if (!is_array($feeds)) $feeds = [];
+
                 $all_feeds = $conn->getAll('SELECT `feed_id`, `settings` FROM ?n', $this->cache_table_name);
+                if (!is_array($all_feeds)) $all_feeds = [];
                 foreach ($all_feeds as $row) {
                     if (!empty($row['settings'])) {
                         $settings = unserialize($row['settings']);
@@ -1176,12 +1267,14 @@ abstract class LADBManager
                     $conn->query('UPDATE ?n SET `last_update` = 0 WHERE `feed_id` IN (?a)', $this->cache_table_name, $feeds);
                 }
                 $conn->commit();
+                // beginTransaction() turned autocommit off; put it back for the
+                // callers that keep using this connection.
+                $conn->autocommit(true);
             }
-            $conn->rollback();
         } catch (Exception $e) {
             $conn->rollbackAndClose();
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('[Flow-Flow] Error in resetCacheLifetimeByFeedType: ' . $e->getMessage());
+            \la\core\LAUtils::errorLog('[Flow-Flow] Error in resetCacheLifetimeByFeedType: ' . $e->getMessage());
         }
     }
 
@@ -1195,10 +1288,11 @@ abstract class LADBManager
      */
     public function addOrUpdatePost($only4insertPartOfSql, $imagePartOfSql, $mediaPartOfSql, $common)
     {
-        $sql = "INSERT INTO ?n SET ?p, ?p ?p ?u ON DUPLICATE KEY UPDATE ?p ?p ?u";
-        if (false == $this->conn()->query($sql, $this->posts_table_name, $only4insertPartOfSql, $imagePartOfSql, $mediaPartOfSql, $common, $imagePartOfSql, $mediaPartOfSql, $common)) {
+        $conn = $this->conn();
+        $sql = "INSERT INTO ?n SET ?p, ?p ?p ?u ON DUPLICATE KEY UPDATE ?p ?p ?u, `user_pic` = IF(VALUES(`user_pic`) != '' AND VALUES(`user_pic`) IS NOT NULL, VALUES(`user_pic`), `user_pic`)";
+        if (false == $conn->query($sql, $this->posts_table_name, $only4insertPartOfSql, $imagePartOfSql, $mediaPartOfSql, $common, $imagePartOfSql, $mediaPartOfSql, $common)) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw new Exception($this->conn()->getError());
+            throw new Exception($conn->getError());
         }
     }
 
@@ -1229,25 +1323,25 @@ abstract class LADBManager
     public function getCarousel($feed_id, $post_id)
     {
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-        error_log(sprintf('Flow-Flow Debug: getCarousel called with feed_id: %s, post_id: %s', $feed_id, $post_id));
+        \la\core\LAUtils::errorLog(sprintf('Flow-Flow Debug: getCarousel called with feed_id: %s, post_id: %s', $feed_id, $post_id));
 
         $conn = $this->conn(true);
 
         // Check if media table exists
         $tableExists = $conn->getOne("SHOW TABLES LIKE ?s", $this->post_media_table_name);
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-        error_log('Flow-Flow Debug: Media table exists: ' . ($tableExists ? 'Yes' : 'No'));
+        \la\core\LAUtils::errorLog('Flow-Flow Debug: Media table exists: ' . ($tableExists ? 'Yes' : 'No'));
 
         if (!$tableExists) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log('Flow-Flow Debug: Media table does not exist: ' . $this->post_media_table_name);
+            \la\core\LAUtils::errorLog('Flow-Flow Debug: Media table does not exist: ' . $this->post_media_table_name);
             return [];
         }
 
         // Get table structure for debugging
         $columns = $conn->getAll("SHOW COLUMNS FROM `{$this->post_media_table_name}`");
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-        error_log('Flow-Flow Debug: Media table columns: ' . print_r(array_column($columns, 'Field'), true));
+        \la\core\LAUtils::errorLog('Flow-Flow Debug: Media table columns: ' . print_r(array_column($columns, 'Field'), true));
 
         // Build query using SafeMySQL's query building methods
         $sql = "SELECT `feed_id`, `post_id`, `media_url`, `media_width`, `media_height`, `media_type` 
@@ -1255,11 +1349,11 @@ abstract class LADBManager
                 WHERE `feed_id` = ?s AND `post_id` = ?s";
 
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-        error_log('Flow-Flow Debug: Executing SQL: ' . $sql . ' with params: ' . print_r([$feed_id, $post_id], true));
+        \la\core\LAUtils::errorLog('Flow-Flow Debug: Executing SQL: ' . $sql . ' with params: ' . print_r([$feed_id, $post_id], true));
         $result = $conn->getAll($sql, $feed_id, $post_id);
 
         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-        error_log(sprintf(
+        \la\core\LAUtils::errorLog(sprintf(
             'Flow-Flow Debug: Found %d media items for feed %s, post %s',
             count($result),
             $feed_id,
@@ -1275,7 +1369,7 @@ abstract class LADBManager
             );
 
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log(sprintf(
+            \la\core\LAUtils::errorLog(sprintf(
                 'Flow-Flow Debug: Checked for any posts in feed %s: %s',
                 $feed_id,
                 $anyPost ? 'Found post ' . $anyPost['post_id'] : 'No posts found'
@@ -1316,12 +1410,13 @@ abstract class LADBManager
      */
     public function addComments($post_id, $comment)
     {
+        $conn = $this->conn();
         $time = time();
         $sql_insert = "INSERT INTO ?n SET `id` = ?s, `post_id` = ?s, `from` = ?s, `text` = ?s, `created_time` = ?s, `updated_time` = ?s ON DUPLICATE KEY UPDATE ?u";
-        $result = $this->conn()->query($sql_insert, $this->comments_table_name, $comment->id, $post_id, is_string($comment->from) ? $comment->from : (is_object($comment->from) ? $comment->from->name : 'Facebook user'), $comment->text, $comment->created_time, $comment->created_time, ['updated_time' => $time, 'text' => $comment->text]);
+        $result = $conn->query($sql_insert, $this->comments_table_name, $comment->id, $post_id, is_string($comment->from) ? $comment->from : (is_object($comment->from) ? $comment->from->name : 'Facebook user'), $comment->text, $comment->created_time, $comment->created_time, ['updated_time' => $time, 'text' => $comment->text]);
         if (false === $result) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw new Exception($this->conn()->getError());
+            throw new Exception($conn->getError());
         }
     }
 
@@ -1339,10 +1434,11 @@ abstract class LADBManager
      */
     public function deleteCarousel4Post($feed_id, $post_id)
     {
+        $conn = $this->conn();
         $sql = "delete from ?n where feed_id = ?s and post_id = ?s";
-        if (false == $this->conn()->query($sql, $this->post_media_table_name, $feed_id, $post_id)) {
+        if (false == $conn->query($sql, $this->post_media_table_name, $feed_id, $post_id)) {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
-            throw new Exception($this->conn()->getError());
+            throw new Exception($conn->getError());
         }
     }
 
@@ -1472,7 +1568,7 @@ abstract class LADBManager
     public function setOrders($feedId)
     {
         $conn = $this->conn();
-        $conn->query('SET @ROW = -1;');//test mysql_query("SELECT @ROW = -1");
+        if ($conn->query('SET @ROW = -1;') === false) return false;
         return $conn->query('UPDATE ?n SET `rand_order` = RAND(), `smart_order` = @ROW := @ROW+1 WHERE `feed_id`=?s ORDER BY post_timestamp DESC', $this->posts_table_name, $feedId);
     }
 
@@ -1809,7 +1905,7 @@ abstract class LADBManager
             $formattedMsg .= "\n-----------------------------------\n";
 
             $error_log_func = 'error_log';
-            @$error_log_func($formattedMsg, 3, $logFile);
+            @$error_log_func(LAUtils::redactSecrets($formattedMsg), 3, $logFile);
         } catch (\Exception $e) {
             // Silently fail
         }

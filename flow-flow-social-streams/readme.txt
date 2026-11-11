@@ -1,24 +1,24 @@
-=== Flow-Flow Social Streams ===
+=== Flow-Flow Social Feed & Social Wall ===
 Contributors: looks_awesome
 Donate link: http://looks-awesome.com/
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
-Tags: instagram feed, facebook feed, embed instagram, instagram widget, instagram gallery
+Tags: social feed, social media feed, social wall, instagram feed, facebook feed
 Requires at least: 5.0
-Tested up to: 7.0
-Stable tag: 5.0.5
+Tested up to: 7.1
+Stable tag: 5.0.8
 
-Display a mix of custom Facebook, Instagram, TikTok, YouTube, X (Twitter) and RSS feeds in grid gallery or widget.
+Social feed plugin: show Instagram, Facebook and X (Twitter) feeds in one responsive social media wall, grid or widget.
 
 == Description ==
 
-Flow-Flow — WordPress Social Stream Grid Gallery is a multipurpose **social media wall** plugin that allows you to display a mix of social media feeds in beautiful responsive galleries and widgets. Embedding user-generated content (UGC) from multiple sources is a great way to add social proof to your WordPress website, increase your brand presence, and boost your conversions. Research shows that over 70% of visitors won't buy without reviews or social proof of any kind.
+Flow-Flow is a WordPress **social feed** plugin that combines your Instagram, Facebook and X (Twitter) feeds into one **social media wall**, shown as a responsive grid gallery or widget. Embedding user-generated content (UGC) from multiple sources is a great way to add social proof to your WordPress website, increase your brand presence, and boost your conversions. Research shows that over 70% of visitors won't buy without reviews or social proof of any kind.
 
 [Check out PRO demo](https://social-streams.com/flow/demo/ "Flow-Flow PRO Demo")
 
 = Features =
 
-* Social networks & sources: Facebook, Instagram, X (Twitter), TikTok, YouTube, RSS & ATOM feeds
+* Social networks: Facebook, Instagram, X (Twitter)
 * Smart background caching for ultra-fast page load speeds
 * PageSpeed optimized with AJAX loading and infinite scrolling
 * User-friendly admin interface with live stream editor
@@ -35,7 +35,7 @@ Flow-Flow — WordPress Social Stream Grid Gallery is a multipurpose **social me
 
 All extensions are compatible and work with the Lite edition of Flow-Flow. [Learn more](http://docs.social-streams.com/article/44-install-flow-wp-extensions "Learn more")
 
-Looking for additional sources like LinkedIn, Pinterest, WordPress posts, or advanced moderation? More sources and tons of fantastic features are available in the PRO version! [Check out comparison table](https://social-streams.com/flow/#pricing "Flow-Flow Pricing")
+Looking for TikTok, YouTube, RSS, LinkedIn, Pinterest, WordPress posts, or advanced moderation? More sources and tons of fantastic features are available in the PRO version! [Check out comparison table](https://social-streams.com/flow/#pricing "Flow-Flow Pricing")
 
 = PRO Version Features =
 
@@ -101,6 +101,9 @@ You can use automatic update to update the plugin safely.
 
 == Frequently Asked Questions ==
 
+= How do I add a social media feed to WordPress? =
+Install and activate Flow-Flow, open Social Apps → Flow-Flow in WP Admin, create a stream, connect your accounts as sources, then paste the stream shortcode into any page, post or widget.
+
 = Where I can find documentation? =
 Please find Flow-Flow knowledge base [here](http://docs.social-streams.com/).
 
@@ -125,6 +128,17 @@ Flow-Flow Lite edition is distributed "as is" and doesn't contain support servic
 4. Adding source popup
 
 == Changelog ==
+
+= Version 5.0.8 =
+* Require capability and nonce checks for backups and remove destructive public cache parameters.
+* Isolate anonymous response caching and invalidate cached responses after committed changes.
+* Reconcile missing schema columns and preserve cached posts and local metadata during refresh failures.
+* Make engagement and CTA metadata updates transactional with truthful failure responses.
+* Bound TikTok token retries, enforce LinkedIn image backoff, and preserve Instagram JSON captions.
+
+= Version 5.0.6 =
+* Fix: Restored view action hook for advertising add-on compatibility.
+* Fix: Security hardening and compatibility updates.
 
 = Version 5.0.5 =
 * New: Alternative caching mode to bypass API requests on frontend calls.

@@ -49,6 +49,7 @@ class FFStatusTab implements LATab {
             'flow_flow_check_facebook_token',
             'flow_flow_check_tiktok_token',
             'flow_flow_trim_debug_log',
+            'flow_flow_cleanup_linkedin_images',
         ];
 
         $status['events'] = [];
@@ -72,6 +73,19 @@ class FFStatusTab implements LATab {
             ]);
             $status['loopback_ok'] = !is_wp_error($resp);
         }
+
+        // LinkedIn Images API backoff status
+        // Same transients FFLinkedIn writes: the backoff end timestamp and its escalation level
+        $backoff_ts = function_exists('get_transient') ? get_transient('ff_li_img_backoff_until') : false;
+        $is_backoff_active = is_numeric($backoff_ts) && (int)$backoff_ts > time();
+        $backoff_remaining = $is_backoff_active ? (int)$backoff_ts - time() : 0;
+        $backoff_count = function_exists('get_transient') ? (int) get_transient('ff_li_img_backoff_level') : 0;
+        $status['linkedin_backoff'] = [
+            'active'       => $is_backoff_active,
+            'expires_at'   => $is_backoff_active ? (int)$backoff_ts : null,
+            'remaining'    => $backoff_remaining,
+            'retry_count'  => $backoff_count,
+        ];
 
         $context['status'] = $status;
 

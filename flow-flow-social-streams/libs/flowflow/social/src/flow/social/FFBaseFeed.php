@@ -144,9 +144,9 @@ abstract class FFBaseFeed implements FFFeed
             $error['type'] = $this->getType();
             $this->errors[] = $error;
             $this->criticalError = !$this->isRateLimitError($error['message']);
-            error_log($se->getMessage());
+            \la\core\LAUtils::errorLog($se->getMessage());
             $this->debugLog("LASocialException caught", $error);
-            //            error_log(print_r($se, true));
+            //            \la\core\LAUtils::errorLog(print_r($se, true));
         } catch (Exception $e) {
             $message = $e->getMessage();
             if (strpos($message, 'mb_') !== false) {
@@ -157,9 +157,9 @@ abstract class FFBaseFeed implements FFFeed
                 'message' => $message,
             ];
             $this->criticalError = !$this->isRateLimitError($e->getMessage());
-            error_log($e->getMessage());
+            \la\core\LAUtils::errorLog($e->getMessage());
             $this->debugLog("Exception caught", $e->getMessage());
-            //            error_log(print_r($e, true));
+            //            \la\core\LAUtils::errorLog(print_r($e, true));
         } catch (\Throwable $t) {
             $message = $t->getMessage();
             if (strpos($message, 'mb_') !== false) {
@@ -170,7 +170,7 @@ abstract class FFBaseFeed implements FFFeed
                 'message' => $message,
             ];
             $this->criticalError = !$this->isRateLimitError($t->getMessage());
-            error_log($t->getMessage());
+            \la\core\LAUtils::errorLog($t->getMessage());
             $this->debugLog("Throwable caught", $t->getMessage());
         }
         // Error state already set in catch blocks
@@ -420,7 +420,7 @@ abstract class FFBaseFeed implements FFFeed
 
     protected function print2log($msg)
     {
-        error_log($msg);
+        \la\core\LAUtils::errorLog($msg);
     }
 
     protected function debugLog($msg, $data = null)
@@ -447,7 +447,7 @@ abstract class FFBaseFeed implements FFFeed
             $formattedMsg .= "\n-----------------------------------\n";
 
             // Failsafe: Use @ to suppress warnings if file is not writable
-            @error_log($formattedMsg, 3, self::$debugLogFile);
+            @error_log(\la\core\LAUtils::redactSecrets($formattedMsg), 3, self::$debugLogFile);
         } catch (\Exception $e) {
             // Silently fail if logging fails
         }

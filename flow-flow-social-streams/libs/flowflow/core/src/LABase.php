@@ -12,6 +12,7 @@ use flow\social\FFFeed;
 use flow\social\FFRemoteFeed;
 use flow\social\LAFeedWithComments;
 use la\core\cache\LACacheAdapter;
+use la\core\cache\LACacheManager;
 use la\core\cache\LAImageSizeCacheManager;
 use la\core\cache\LATransientCache;
 use la\core\db\LADB;
@@ -151,7 +152,7 @@ abstract class LABase {
             $timestamp = gmdate('Y-m-d H:i:s');
             $msg = "[$timestamp] [LABase] processAjaxRequest called (fetch_posts)";
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            @error_log($msg . "\n-----------------------------------\n", 3, FF_LOG_FILE_DEST);
+            @error_log(LAUtils::redactSecrets($msg . "\n-----------------------------------\n"), 3, FF_LOG_FILE_DEST);
         }
 
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
@@ -163,14 +164,16 @@ abstract class LABase {
             header('Expires: 0'); // Proxies.
         }
         
+        $this->normalizeRequestNumbers();
+
         // Extract request parameters for caching
         $streamId = LAUtils::get_request_var('stream-id', 'request', 'text');
         $page = LAUtils::get_request_var('page', 'request', 'int', 0);
         $hash = LAUtils::get_request_var('hash', 'request', 'text');
         $isRecent = LAUtils::get_request_var('recent', 'request', 'raw', null) !== null;
 
-        $raw_force = LAUtils::get_request_var('force', 'request', 'text');
-        $isForce = $raw_force && ($raw_force !== 'false');
+        // Anonymous visitors cannot bypass the response cache or feed lifetimes.
+        $isForce = LAUtils::request_flag('force') && FF_USE_WP && current_user_can('manage_options');
 
         $raw_preview = LAUtils::get_request_var('preview', 'request', 'text');
         $isPreview = $raw_preview && ($raw_preview !== 'false');
@@ -179,11 +182,19 @@ abstract class LABase {
         $disableCache = (bool)$raw_disable_cache;
         
         // Determine if we can use transient cache
-        $canUseCache = !$isForce && !$isPreview && !$disableCache;
+        $canUseCache = FF_USE_WP && !is_user_logged_in() && !$isForce && !$isPreview && !$disableCache;
+        $cacheKey = null;
         
         // Check transient cache first (before DB operations)
         if ($canUseCache && $streamId) {
-            $cachedResponse = LATransientCache::get($streamId, $page, $hash, $isRecent);
+            // countOfPages is recomputed server side, so it is not part of the key.
+            // Rendered dates and translations follow the locale and WordPress date settings.
+            $cacheKey = LATransientCache::generateCacheKey($streamId, $page, $hash, $isRecent, [
+                'boosted' => (bool)(int)LAUtils::get_request_var('boosted', 'request', 'text'),
+                'locale' => function_exists('determine_locale') ? determine_locale() : (function_exists('get_locale') ? get_locale() : ''),
+                'dates' => [get_option('date_format'), get_option('time_format'), get_option('timezone_string'), get_option('gmt_offset')]
+            ]);
+            $cachedResponse = LATransientCache::getByKey($cacheKey);
             if ($cachedResponse !== false) {
                 header('Content-Type: application/json');
                 header('X-FF-Cache: HIT');
@@ -204,9 +215,19 @@ abstract class LABase {
                 
                 $jsonResponse = $this->process( [ $stream ], $disableCache);
                 
-                // Store in transient cache for future requests
-                if ($canUseCache && !empty($jsonResponse)) {
-                    LATransientCache::set($streamId, $jsonResponse, $page, $hash, $isRecent);
+                // Store only requests a real client makes: a first page, or a hash
+                // this site issued and an existing page. Forged values stay uncached.
+                if ($hash === '') {
+                    $cacheable = $page === 0;
+                } else {
+                    $countOfPages = (int)LAUtils::get_request_var('countOfPages', 'request', 'int', 0);
+                    $cacheable = LATransientCache::isIssuedHash($streamId, $hash) && ($page === 0 || $page < $countOfPages);
+                }
+                if ($canUseCache && $cacheable && !empty($jsonResponse)) {
+                    LATransientCache::setByKey($cacheKey, $jsonResponse);
+                    if ($hash === '') {
+                        LATransientCache::issueHash($streamId, LAUtils::get_request_var('hash', 'request', 'text'));
+                    }
                     header('X-FF-Cache: MISS');
                 }
                 
@@ -226,7 +247,11 @@ abstract class LABase {
             $timestamp = gmdate('Y-m-d H:i:s');
             $msg = "[$timestamp] [LABase] moderation_apply called";
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            @error_log($msg . "\n-----------------------------------\n", 3, FF_LOG_FILE_DEST);
+            @error_log(LAUtils::redactSecrets($msg . "\n-----------------------------------\n"), 3, FF_LOG_FILE_DEST);
+        }
+        // Moderation changes posts and CTAs, so it needs a nonce as well as the moderator role.
+        if (FF_USE_WP && !check_ajax_referer('flow_flow_moderation', 'security', false)) {
+            wp_send_json_error(['message' => 'Invalid nonce'], 403);
         }
         $stream_param = LAUtils::get_request_var('stream', 'request', 'text');
 		if ($stream_param && $this->prepareProcess()) {
@@ -253,7 +278,7 @@ abstract class LABase {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_print_r, WordPress.Security.NonceVerification.Recommended
             $msg = "[$timestamp] [LABase] processAjaxRequestBackground called\nData: " . print_r($_REQUEST, true);
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            @error_log($msg . "\n-----------------------------------\n", 3, FF_LOG_FILE_DEST);
+            @error_log(LAUtils::redactSecrets($msg . "\n-----------------------------------\n"), 3, FF_LOG_FILE_DEST);
         }
 
         // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound
@@ -394,13 +419,16 @@ abstract class LABase {
                                     try {
                                         // Set up request parameters that would normally come from AJAX
                                         $_REQUEST['feed_id'] = $feed_id;
-                                        $_REQUEST['force'] = $force;
-                                        
-                                        $this->processAjaxRequestBackground(!$withDisabled, false);
+                                        $forceRefresh = LACacheManager::$forceRefresh;
+                                        LACacheManager::$forceRefresh = (bool)$force;
+                                        try {
+                                            $this->processAjaxRequestBackground(!$withDisabled, false);
+                                        } finally {
+                                            LACacheManager::$forceRefresh = $forceRefresh;
+                                        }
                                         
                                         // Clean up request parameters
                                         unset($_REQUEST['feed_id']);
-                                        unset($_REQUEST['force']);
                                     } catch (Exception $direct_exception) {
                                         // Fallback to HTTP request if direct call fails
                                         if (defined('FF_LOG_FILE_DEST')) {
@@ -611,25 +639,29 @@ abstract class LABase {
         return $context;
     }
 
+    private function normalizeRequestNumbers() {
+        foreach (['stream-id', 'page', 'countOfPages'] as $name) {
+            if (isset($_REQUEST[$name])) {
+                $value = LAUtils::get_request_var($name, 'request', 'raw');
+                $_REQUEST[$name] = (string)(int)filter_var(
+                    is_scalar($value) ? trim((string)$value) : '', FILTER_SANITIZE_NUMBER_INT
+                );
+            }
+        }
+    }
+
 	protected function prepareProcess() {
+        $this->normalizeRequestNumbers();
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.MissingUnslash
 		// phpcs:disable WordPress.Security.ValidatedSanitizedInput.InputNotValidated
 		// phpcs:disable WordPress.Security.NonceVerification.Recommended
-		if (isset($_REQUEST['stream-id'])) {
-			$_REQUEST['stream-id'] = @filter_var( trim( LAUtils::get_request_var('stream-id', 'request', 'raw') ), FILTER_SANITIZE_NUMBER_INT);
-		}
+
 		if (isset($_REQUEST['feed_id'])) {
 			$_REQUEST['feed_id'] = @filter_var( trim( LAUtils::get_request_var('feed_id', 'request', 'raw') ), FILTER_SANITIZE_STRING );
 		}
 		if (isset($_REQUEST['action'])) {
 			$_REQUEST['action'] = @filter_var( trim( LAUtils::get_request_var('action', 'request', 'raw') ), FILTER_SANITIZE_STRING );
-		}
-		if (isset($_REQUEST['page'])) {
-			$_REQUEST['page'] = filter_var( trim( LAUtils::get_request_var('page', 'request', 'raw') ), FILTER_SANITIZE_NUMBER_INT);
-		}
-		if (isset($_REQUEST['countOfPages'])) {
-			$_REQUEST['countOfPages'] = filter_var( trim( LAUtils::get_request_var('countOfPages', 'request', 'raw') ), FILTER_SANITIZE_NUMBER_INT);
 		}
 		$raw_hash = LAUtils::get_request_var('hash', 'request', 'raw', '');
 		if (!empty($raw_hash)) {
@@ -999,7 +1031,7 @@ abstract class LABase {
     private function log($msg, $type = 0, $destination = '') {
         $error_log_func = 'error_log';
         if ($type === 3) {
-            @$error_log_func($msg, 3, $destination);
+            @$error_log_func(LAUtils::redactSecrets($msg), 3, $destination);
         } else {
             $error_log_func($msg);
         }

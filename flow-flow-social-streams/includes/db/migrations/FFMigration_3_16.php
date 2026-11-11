@@ -30,30 +30,30 @@ class FFMigration_3_16 implements ILADBMigration
         $log = defined('FF_LOG_FILE_DEST') ? FF_LOG_FILE_DEST : null;
 
         if ($log)
-            error_log('[Flow-Flow Migration 3.16] Checking for error_timestamp column' . PHP_EOL, 3, $log);
+            \la\core\LAUtils::errorLog('[Flow-Flow Migration 3.16] Checking for error_timestamp column' . PHP_EOL, 3, $log);
 
         // Check if column already exists
         if (!LADDLUtils::existColumn($conn, $cache_table, 'error_timestamp')) {
             if ($log)
-                error_log('[Flow-Flow Migration 3.16] Column error_timestamp missing, adding it' . PHP_EOL, 3, $log);
+                \la\core\LAUtils::errorLog('[Flow-Flow Migration 3.16] Column error_timestamp missing, adding it' . PHP_EOL, 3, $log);
             try {
                 $sql = "ALTER TABLE ?n ADD COLUMN `error_timestamp` INT DEFAULT 0 AFTER `errors`";
                 $result = $conn->query($sql, $cache_table);
                 if ($result) {
                     if ($log)
-                        error_log('[Flow-Flow Migration 3.16] Successfully added error_timestamp column' . PHP_EOL, 3, $log);
+                        \la\core\LAUtils::errorLog('[Flow-Flow Migration 3.16] Successfully added error_timestamp column' . PHP_EOL, 3, $log);
                 } else {
                     if ($log)
-                        error_log('[Flow-Flow Migration 3.16] FAILED to add error_timestamp column - query returned false' . PHP_EOL, 3, $log);
+                        \la\core\LAUtils::errorLog('[Flow-Flow Migration 3.16] FAILED to add error_timestamp column - query returned false' . PHP_EOL, 3, $log);
                 }
             } catch (\Exception $e) {
                 if ($log)
-                    error_log('[Flow-Flow Migration 3.16] EXCEPTION adding error_timestamp column: ' . $e->getMessage() . PHP_EOL, 3, $log);
+                    \la\core\LAUtils::errorLog('[Flow-Flow Migration 3.16] EXCEPTION adding error_timestamp column: ' . $e->getMessage() . PHP_EOL, 3, $log);
                 throw $e;
             }
         } else {
             if ($log)
-                error_log('[Flow-Flow Migration 3.16] Column error_timestamp already exists' . PHP_EOL, 3, $log);
+                \la\core\LAUtils::errorLog('[Flow-Flow Migration 3.16] Column error_timestamp already exists' . PHP_EOL, 3, $log);
         }
     }
 }

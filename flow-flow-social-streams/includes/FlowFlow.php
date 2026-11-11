@@ -35,7 +35,7 @@ class FlowFlow extends LABase {
 	private static function ff_log($message, $context = 'FlowFlow') {
 		if (!defined('FF_LOG_FILE_DEST')) return;
 		$timestamp = date('Y-m-d H:i:s');
-		@error_log("[$timestamp] [$context] $message\n-----------------------------------\n", 3, FF_LOG_FILE_DEST);
+		@error_log(LAUtils::redactSecrets("[$timestamp] [$context] $message\n-----------------------------------\n"), 3, FF_LOG_FILE_DEST);
 	}
 
     protected function getShortcodePrefix(){
@@ -69,8 +69,9 @@ class FlowFlow extends LABase {
     /**
      * Daily cron: check global TikTok token and refresh it if it is expired or near expiration.
      * Uses global settings fields saved in options: tiktok_access_token, tiktok_refresh_token, tiktok_expires_in, tiktok_username.
+     * On-demand callers pass false to retry their own request without refreshing feeds recursively.
      */
-    public final function checkTikTokToken() {
+    public final function checkTikTokToken($refreshFeeds = true) {
         $dbm = LAUtils::dbm($this->context);
         try {
             // Get current options
@@ -110,7 +111,7 @@ class FlowFlow extends LABase {
                 'type' => 'tiktok'  // Make sure to include the type parameter
             ], 'https://flow.looks-awesome.com/service/auth/callback/tiktok-auth.php');
             
-            self::ff_log('Initiating cron token refresh to: ' . $refreshUrl, 'TikTok');
+            self::ff_log('Initiating cron token refresh', 'TikTok');
             
             // Make the request to refresh the token
             $response = wp_remote_get($refreshUrl, [
@@ -124,7 +125,6 @@ class FlowFlow extends LABase {
             ]);
             
             self::ff_log('Token refresh response code: ' . wp_remote_retrieve_response_code($response), 'TikTok');
-            self::ff_log('Token refresh response body: ' . wp_remote_retrieve_body($response), 'TikTok');
             
             if (is_wp_error($response)) {
                 self::ff_log('Cron token refresh failed: ' . $response->get_error_message(), 'TikTok');
@@ -142,17 +142,21 @@ class FlowFlow extends LABase {
                     self::ff_log('Failed to parse token refresh response: ' . json_last_error_msg(), 'TikTok');
                     return false;
                 }
+
+                $is_success = isset($data['success']) ? (bool)$data['success'] : true;
+                $new_access_token = isset($data['access_token']) ? trim($data['access_token']) : '';
+                $new_refresh_token = isset($data['refresh_token']) ? trim($data['refresh_token']) : '';
                 
-                // Update the options with the new token data
-                if (isset($data['access_token'])) {
-                    $options['tiktok_access_token'] = $data['access_token'];
+                // Update the options with the new token data if successful and token is non-empty
+                if ($is_success && !empty($new_access_token)) {
+                    $options['tiktok_access_token'] = $new_access_token;
                     
-                    // Update refresh token if a new one was provided
-                    if (isset($data['refresh_token'])) {
-                        $options['tiktok_refresh_token'] = $data['refresh_token'];
+                    // Update refresh token ONLY if a non-empty new one was provided
+                    if (!empty($new_refresh_token)) {
+                        $options['tiktok_refresh_token'] = $new_refresh_token;
                     }
                     
-                    // Calculate and store the expiration time
+                    // Calculate and store the expiration timestamp
                     $expires_in = isset($data['expires_in']) ? (int)$data['expires_in'] : 0;
                     if ($expires_in > 0) {
                         $expires_at = $current_time + $expires_in;
@@ -166,9 +170,8 @@ class FlowFlow extends LABase {
 
                     // Fetch and persist latest TikTok user info (avatar, username, etc.)
                     try {
-                        $accessToken = isset($options['tiktok_access_token']) ? trim($options['tiktok_access_token']) : '';
-                        if ($accessToken !== '') {
-                            $dbm->updateTikTokUserInfo($accessToken);
+                        if ($new_access_token !== '') {
+                            $dbm->updateTikTokUserInfo($new_access_token);
                             self::ff_log('Cron: user info updated after token refresh', 'TikTok');
                         }
                     } catch (\Throwable $e) {
@@ -179,9 +182,20 @@ class FlowFlow extends LABase {
                     // Do NOT use cleanByFeedType() — it deletes all cached posts.
                     $dbm->resetCacheLifetimeByFeedType('tiktok');
 
+                    if ($refreshFeeds) {
+                        // Scheduled renewal still fetches new posts immediately.
+                        try {
+                            self::ff_log('Cron: refreshing feeds after TikTok token refresh', 'TikTok');
+                            $this->refreshCache(null, true);
+                        } catch (\Throwable $e) {
+                            self::ff_log('Cron: failed to refresh feeds after token refresh: ' . $e->getMessage(), 'TikTok');
+                        }
+                    }
+
                     return true;
                 } else {
-                    self::ff_log('Token refresh response missing access_token', 'TikTok');
+                    $err = isset($data['error']) ? (is_string($data['error']) ? $data['error'] : json_encode($data['error'])) : 'Response missing valid access_token';
+                    self::ff_log('Token refresh failed: ' . $err, 'TikTok');
                     return false;
                 }
             } else {
@@ -239,7 +253,7 @@ class FlowFlow extends LABase {
                 'type' => 'linkedin'
             ], 'https://flow.looks-awesome.com/service/auth/callback/linkedin-auth.php');
             
-            self::ff_log('Initiating cron token refresh to: ' . $refreshUrl, 'LinkedIn');
+            self::ff_log('Initiating cron token refresh', 'LinkedIn');
             
             // Make the request to refresh the token
             $response = wp_remote_get($refreshUrl, [
@@ -253,7 +267,6 @@ class FlowFlow extends LABase {
             ]);
             
             self::ff_log('Token refresh response code: ' . wp_remote_retrieve_response_code($response), 'LinkedIn');
-            self::ff_log('Token refresh response body: ' . wp_remote_retrieve_body($response), 'LinkedIn');
             
             if (is_wp_error($response)) {
                 self::ff_log('Cron token refresh failed: ' . $response->get_error_message(), 'LinkedIn');

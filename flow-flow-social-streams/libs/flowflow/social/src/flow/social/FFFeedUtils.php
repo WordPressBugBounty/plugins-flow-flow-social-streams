@@ -58,7 +58,7 @@ class FFFeedUtils
 				$response = self::getFeedDataWithThrowException($url, $timeout, $header, $log, $followLocation, $useIpv4, $retryCount);
 			} else if (strpos($message, "reduce the amount of data") !== false && $retryCount < 5) {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log('FFFeedUtils :: Meta API "reduce the amount of data" error encountered. Attempting to optimize URL and retry. Current URL: ' . $url);
+				\la\core\LAUtils::errorLog('FFFeedUtils :: Meta API "reduce the amount of data" error encountered. Attempting to optimize URL and retry. Current URL: ' . $url);
 				$optimizedUrl = $url;
 				$reducedLimit = false;
 
@@ -89,7 +89,7 @@ class FFFeedUtils
 
 				if ($reducedLimit) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log('FFFeedUtils :: Reduced limit in URL to mitigate payload size. Retry URL: ' . $optimizedUrl);
+					\la\core\LAUtils::errorLog('FFFeedUtils :: Reduced limit in URL to mitigate payload size. Retry URL: ' . $optimizedUrl);
 				} else {
 					$strippedMetadata = false;
 					$fieldsToStrip = [
@@ -120,7 +120,7 @@ class FFFeedUtils
 
 					if ($strippedMetadata) {
 						// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-						error_log('FFFeedUtils :: Stripped likes/comments/shares metadata fields to mitigate payload size. Retry URL: ' . $optimizedUrl);
+						\la\core\LAUtils::errorLog('FFFeedUtils :: Stripped likes/comments/shares metadata fields to mitigate payload size. Retry URL: ' . $optimizedUrl);
 					} else {
 						$reducedToMin = false;
 						if (preg_match('/limit=(\d+)/', $optimizedUrl, $matches)) {
@@ -145,7 +145,7 @@ class FFFeedUtils
 
 						if ($reducedToMin) {
 							// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-							error_log('FFFeedUtils :: Reduced limit to 1 as a fallback. Retry URL: ' . $optimizedUrl);
+							\la\core\LAUtils::errorLog('FFFeedUtils :: Reduced limit to 1 as a fallback. Retry URL: ' . $optimizedUrl);
 						} else {
 							if (strpos($optimizedUrl, 'attachments{') !== false || preg_match('/attachments%7B[^%]*%7D/i', $optimizedUrl) || strpos($optimizedUrl, 'attachments%7B') !== false) {
 								$optimizedUrl = preg_replace('/attachments\{.*?\},?/', '', $optimizedUrl);
@@ -153,7 +153,7 @@ class FFFeedUtils
 								$optimizedUrl = str_replace(',,', ',', $optimizedUrl);
 								$optimizedUrl = str_replace('%2C%2C', '%2C', $optimizedUrl);
 								// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-								error_log('FFFeedUtils :: Stripped attachments as a last resort. Retry URL: ' . $optimizedUrl);
+								\la\core\LAUtils::errorLog('FFFeedUtils :: Stripped attachments as a last resort. Retry URL: ' . $optimizedUrl);
 							} else {
 								// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
 								throw new LASocialRequestException($url, $response['errors'], $message);
@@ -229,7 +229,7 @@ class FFFeedUtils
 		if (strlen($error) > 0 && (strpos($error, 'PROTOCOL_ERROR') !== false || strpos($error, 'was not closed cleanly') !== false)) {
 			$originalPage = $page;
 			// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			error_log('FFFeedUtils :: HTTP/2 PROTOCOL_ERROR detected for URL: ' . $url . ' — retrying with HTTP/1.1');
+			\la\core\LAUtils::errorLog('FFFeedUtils :: HTTP/2 PROTOCOL_ERROR detected for URL: ' . $url . ' — retrying with HTTP/1.1');
 			$error = '';
 			curl_setopt($c, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1);
 			curl_setopt($c, CURLOPT_FRESH_CONNECT, true);
@@ -239,16 +239,16 @@ class FFFeedUtils
 				// Retry failed — use original response if it had content (error was just stream cleanup)
 				if (!empty($originalPage)) {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log('FFFeedUtils :: HTTP/1.1 retry failed, but original response had content — using it. URL: ' . $url);
+					\la\core\LAUtils::errorLog('FFFeedUtils :: HTTP/1.1 retry failed, but original response had content — using it. URL: ' . $url);
 					$page = $originalPage;
 					$error = '';
 				} else {
 					// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					error_log('FFFeedUtils :: HTTP/1.1 retry also failed for URL: ' . $url . ' — ' . $error);
+					\la\core\LAUtils::errorLog('FFFeedUtils :: HTTP/1.1 retry also failed for URL: ' . $url . ' — ' . $error);
 				}
 			} else {
 				// phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-				error_log('FFFeedUtils :: HTTP/1.1 retry succeeded for URL: ' . $url);
+				\la\core\LAUtils::errorLog('FFFeedUtils :: HTTP/1.1 retry succeeded for URL: ' . $url);
 			}
 		}
 
@@ -294,6 +294,7 @@ class FFFeedUtils
 			) {
 				curl_setopt($c, CURLOPT_FAILONERROR, false);
 				$body = ($followLocation) ? curl_exec($c) : self::curl_exec_follow($c);
+				$retryCode = (int) curl_getinfo($c, CURLINFO_HTTP_CODE);
 				$body = json_decode($body);
 				if (isset($body->error->message))
 					$error = $body->error->message;
@@ -303,6 +304,10 @@ class FFFeedUtils
 					$error = $body->message;
 				else if (!is_null($body))
 					$error = 'Problem with parsing the error data';//print_r($body, true);
+				// Keep the status: rate-limit detection needs it when the body has no message
+				if ($retryCode >= 400 && strpos($error, (string) $retryCode) === false) {
+					$error .= ' (HTTP status ' . $retryCode . ')';
+				}
 			}
 			$errors[] = array('msg' => $error, 'url' => $url);
 		} else if (200 != $http_code = curl_getinfo($c, CURLINFO_HTTP_CODE)) {

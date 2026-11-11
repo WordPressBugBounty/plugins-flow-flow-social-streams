@@ -64,7 +64,7 @@ class FFEngagementTracker
         }
 
         // Rate limit
-        $ip = $this->getClientIP();
+        $ip = LAUtils::client_ip();
         $transient_key = 'ff_eng_' . md5($ip);
         $count = (int) get_transient($transient_key);
         if ($count >= 30) {
@@ -94,10 +94,9 @@ class FFEngagementTracker
             if (!isset($aggregated[$key])) {
                 $aggregated[$key] = ['feed_id' => $feedId, 'post_id' => $postId, 'counts' => []];
             }
-            if (!isset($aggregated[$key]['counts'][$type])) {
-                $aggregated[$key]['counts'][$type] = 0;
-            }
-            $aggregated[$key]['counts'][$type]++;
+            // One request counts each event type at most once per post, so a
+            // single batch cannot inflate a counter.
+            $aggregated[$key]['counts'][$type] = 1;
         }
 
         if (empty($aggregated)) {
@@ -106,104 +105,99 @@ class FFEngagementTracker
         }
 
         $dbm = LAUtils::dbm($this->context);
-        $conn = $dbm->conn(true);
-        $postsTable = $dbm->posts_table_name;
+        $conn = null;
         $updated = 0;
-
+        $failure = null;
         $typeMap = [
             'lightbox_open'  => 'lightbox_opens',
             'outbound_click' => 'outbound_clicks',
             'profile_visit'  => 'profile_visits',
             'post_view'      => 'post_views',
         ];
-
-        // Optimized batch processing:
-        // 1. Fetch all existing engagement data in one query
         $whereClauses = [];
-        $params = [];
+        $params = [$dbm->posts_table_name];
         foreach ($aggregated as $item) {
             $whereClauses[] = '(post_id = ?s AND feed_id = ?s)';
             $params[] = $item['post_id'];
             $params[] = $item['feed_id'];
         }
+        $sql = 'SELECT `post_id`, `feed_id`, `post_type`, `post_additional` FROM ?n WHERE '
+            . implode(' OR ', $whereClauses) . ' ORDER BY `post_id`, `post_type`, `feed_id` FOR UPDATE';
 
-        $sql = 'SELECT `post_id`, `feed_id`, `post_additional` FROM ?n WHERE ' . implode(' OR ', $whereClauses);
-        array_unshift($params, $postsTable);
-        
         try {
-            $existingRows = call_user_func_array([$conn, 'getAll'], array_merge([$sql], $params));
-            $rowMap = [];
-            foreach ($existingRows as $r) $rowMap[$r['feed_id'] . '|' . $r['post_id']] = $r['post_additional'];
-
-            // 2. Start transaction for atomic updates
-            $conn->beginTransaction();
-
-            foreach ($aggregated as $key => $item) {
-                if (!isset($rowMap[$key])) continue;
-
-                $additional = !empty($rowMap[$key]) ? json_decode($rowMap[$key], true) : [];
-                if (!is_array($additional)) $additional = [];
-
+            $conn = $dbm->conn(true);
+            if ($conn->beginTransaction() === false) throw new \RuntimeException('Could not begin engagement update');
+            // All post_additional writers lock their current row before merging
+            // JSON. These guarantees require transactional InnoDB post tables.
+            $rows = call_user_func_array([$conn, 'getAll'], array_merge([$sql], $params));
+            if (!is_array($rows)) throw new \RuntimeException('Could not read engagement metadata');
+            foreach ($rows as $row) {
+                $key = $row['feed_id'] . '|' . $row['post_id'];
+                if (!isset($aggregated[$key])) continue;
+                $additional = $this->decodePostAdditional($row);
+                if ($additional === null) continue;
+                if (isset($additional['engagement']) && is_object($additional['engagement'])) {
+                    $additional['engagement'] = (array)$additional['engagement'];
+                }
                 if (!isset($additional['engagement']) || !is_array($additional['engagement'])) {
-                    $additional['engagement'] = [
-                        'lightbox_opens' => 0, 
-                        'outbound_clicks' => 0, 
-                        'profile_visits' => 0,
-                        'post_views' => 0
-                    ];
+                    $additional['engagement'] = ['lightbox_opens' => 0, 'outbound_clicks' => 0, 'profile_visits' => 0, 'post_views' => 0];
                 }
-
-                foreach ($item['counts'] as $type => $delta) {
-                    $engKey = isset($typeMap[$type]) ? $typeMap[$type] : null;
-                    if ($engKey) {
-                        $additional['engagement'][$engKey] =
-                            (int) (isset($additional['engagement'][$engKey]) ? $additional['engagement'][$engKey] : 0) + $delta;
-                    }
+                foreach ($aggregated[$key]['counts'] as $type => $delta) {
+                    $engKey = $typeMap[$type];
+                    $additional['engagement'][$engKey] = (int)($additional['engagement'][$engKey] ?? 0) + $delta;
                 }
-
-                $conn->query(
-                    'UPDATE ?n SET `post_additional` = ?s WHERE `post_id` = ?s AND `feed_id` = ?s',
-                    $postsTable, json_encode($additional), $item['post_id'], $item['feed_id']
-                );
+                // Event payloads identify a post/feed pair. If several post
+                // types match, update each physical row from its own metadata.
+                if ($conn->query(
+                    'UPDATE ?n SET `post_additional` = ?s WHERE `post_id` = ?s AND `feed_id` = ?s AND `post_type` = ?s',
+                    $dbm->posts_table_name, $this->encodePostAdditional($additional),
+                    $row['post_id'], $row['feed_id'], $row['post_type']
+                ) === false) throw new \RuntimeException('Could not save engagement metadata');
                 $updated++;
             }
-
-            $conn->commit();
-        } catch (\Throwable $e) {
-            if (isset($conn)) $conn->rollback();
-            // silently continue or log if needed
-        }
-
-        if ($updated > 0) {
-            // Increment persistent totals in the plugin's own options table
-            try {
-                $currentTotals = $dbm->getOption('engagement_totals', true);
-                if (!is_array($currentTotals)) {
-                    // First time or corrupted — seed from table scan
-                    $currentTotals = $this->scanPostsForTotals($dbm);
-                }
-                foreach ($aggregated as $item) {
-                    if (!isset($rowMap[$item['feed_id'] . '|' . $item['post_id']])) continue;
-                    foreach ($item['counts'] as $type => $delta) {
-                        $engKey = isset($typeMap[$type]) ? $typeMap[$type] : null;
-                        if ($engKey) {
-                            $currentTotals[$engKey] = (isset($currentTotals[$engKey]) ? (int)$currentTotals[$engKey] : 0) + $delta;
-                            $currentTotals['total'] = (isset($currentTotals['total']) ? (int)$currentTotals['total'] : 0) + $delta;
-                            if ($engKey !== 'post_views') {
-                                $currentTotals['total_no_views'] = (isset($currentTotals['total_no_views']) ? (int)$currentTotals['total_no_views'] : 0) + $delta;
-                            }
-                        }
-                    }
-                }
-                $dbm->setOption('engagement_totals', $currentTotals, true);
-            } catch (\Throwable $e) {
-                // Non-critical — totals will self-heal on next getOverallStats call
-                error_log('Flow-Flow engagement totals update failed: ' . $e->getMessage());
+            if ($conn->commit() === false) throw new \RuntimeException('Could not commit engagement update');
+        } catch (\Throwable $error) {
+            $failure = $error;
+            $updated = 0;
+            if ($conn) {
+                try { $conn->rollback(); } catch (\Throwable $ignored) {}
             }
-            delete_transient('ff_engagement_total_stats');
+        } finally {
+            if ($conn) $conn->close();
         }
-
+        if ($failure) {
+            wp_send_json_error(['message' => 'Could not record engagement', 'updated' => 0], 500);
+            return;
+        }
+        // The update is committed; a cache failure must not turn it into an error.
+        if ($updated > 0) $this->afterCommit(function () { delete_transient('ff_engagement_total_stats'); });
         wp_send_json_success(['updated' => $updated]);
+    }
+
+    private function decodePostAdditional(array $row)
+    {
+        $json = $row['post_additional'];
+        if ($json === null || $json === '') return [];
+        // Keep nested objects intact when changing only the engagement key.
+        $additional = json_decode($json);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            // Refresh also retains malformed legacy metadata. Preserve that
+            // row verbatim without blocking valid rows in this batch.
+            FFLogManager::log('Skipping malformed engagement metadata', [
+                'feed_id' => $row['feed_id'],
+                'post_id' => $row['post_id'],
+                'post_type' => $row['post_type'],
+            ]);
+            return null;
+        }
+        return is_object($additional) || is_array($additional) ? (array)$additional : [];
+    }
+
+    private function encodePostAdditional($additional)
+    {
+        $json = json_encode($additional);
+        if ($json === false) throw new \RuntimeException('Could not encode post metadata');
+        return $json;
     }
 
     // ───────────── Admin bar ─────────────
@@ -225,7 +219,6 @@ class FFEngagementTracker
             $dbm = LAUtils::dbm($this->context);
             // Always scan posts — they are the source of truth
             $totals = $this->scanPostsForTotals($dbm);
-            $dbm->setOption('engagement_totals', $totals, true);
 
             set_transient('ff_engagement_total_stats', $totals, 600); // 10 min
             return $totals;
@@ -236,7 +229,7 @@ class FFEngagementTracker
 
     /**
      * Scan all posts for engagement data and compute totals.
-     * Used for one-time migration and as a fallback.
+     * Per-post counters are the only persistent source of totals.
      */
     private function scanPostsForTotals($dbm)
     {
@@ -498,44 +491,55 @@ class FFEngagementTracker
             wp_send_json_error(['message' => 'Unauthorized'], 403);
             return;
         }
-
         check_ajax_referer('ff_engagement_admin', '_nonce');
-
+        $conn = null;
+        $failure = null;
         try {
             $dbm = LAUtils::dbm($this->context);
-
-            // 1. Reset persistent totals in the plugin options table
-            $dbm->setOption('engagement_totals', $this->emptyTotals(), true);
-            delete_transient('ff_engagement_total_stats');
-
-            // 2. Reset badge counter for current user
-            update_user_meta(get_current_user_id(), 'ff_engagement_last_seen', 0);
-
-            // 3. Clear per-post engagement data from the posts table
             $conn = $dbm->conn(true);
+            if ($conn->beginTransaction() === false) throw new \RuntimeException('Could not begin engagement reset');
             $rows = $conn->getAll(
-                'SELECT `post_id`, `feed_id`, `post_additional` FROM ?n WHERE `post_additional` LIKE ?s',
+                'SELECT `post_id`, `feed_id`, `post_type`, `post_additional` FROM ?n WHERE `post_additional` LIKE ?s ORDER BY `post_id`, `post_type`, `feed_id` FOR UPDATE',
                 $dbm->posts_table_name, '%engagement%'
             );
-
-            if (!empty($rows)) {
-                $conn->beginTransaction();
-                foreach ($rows as $row) {
-                    $additional = json_decode($row['post_additional'], true);
-                    if (isset($additional['engagement'])) {
-                        unset($additional['engagement']);
-                        $conn->query(
-                            'UPDATE ?n SET `post_additional` = ?s WHERE `post_id` = ?s AND `feed_id` = ?s',
-                            $dbm->posts_table_name, json_encode($additional), $row['post_id'], $row['feed_id']
-                        );
-                    }
-                }
-                $conn->commit();
+            if (!is_array($rows)) throw new \RuntimeException('Could not read engagement metadata');
+            foreach ($rows as $row) {
+                $additional = $this->decodePostAdditional($row);
+                if ($additional === null) continue;
+                if (!array_key_exists('engagement', $additional)) continue;
+                unset($additional['engagement']);
+                if ($conn->query(
+                    'UPDATE ?n SET `post_additional` = ?s WHERE `post_id` = ?s AND `feed_id` = ?s AND `post_type` = ?s',
+                    $dbm->posts_table_name, $this->encodePostAdditional($additional),
+                    $row['post_id'], $row['feed_id'], $row['post_type']
+                ) === false) throw new \RuntimeException('Could not reset engagement metadata');
             }
+            if ($conn->commit() === false) throw new \RuntimeException('Could not commit engagement reset');
+        } catch (\Throwable $error) {
+            $failure = $error;
+            if ($conn) {
+                try { $conn->rollback(); } catch (\Throwable $ignored) {}
+            }
+        } finally {
+            if ($conn) $conn->close();
+        }
+        if ($failure) {
+            wp_send_json_error(['message' => 'Could not reset engagement'], 500);
+            return;
+        }
+        $this->afterCommit(function () {
+            delete_transient('ff_engagement_total_stats');
+            update_user_meta(get_current_user_id(), 'ff_engagement_last_seen', 0);
+        });
+        wp_send_json_success();
+    }
 
-            wp_send_json_success();
-        } catch (\Throwable $e) {
-            wp_send_json_error(['message' => $e->getMessage()], 500);
+    private function afterCommit(callable $sideEffects)
+    {
+        try {
+            $sideEffects();
+        } catch (\Throwable $error) {
+            FFLogManager::log('Engagement cache update failed after commit', ['error' => $error->getMessage()]);
         }
     }
 
@@ -1079,20 +1083,6 @@ CSS;
     });
 })();
 JS;
-    }
-
-    // ───────────── Helpers ─────────────
-
-    private function getClientIP()
-    {
-        foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'] as $h) {
-            if (!empty($_SERVER[$h])) {
-                $ip = $_SERVER[$h];
-                if (strpos($ip, ',') !== false) $ip = trim(explode(',', $ip)[0]);
-                if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
-            }
-        }
-        return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
     }
 }
 

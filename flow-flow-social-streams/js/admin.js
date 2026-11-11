@@ -86,6 +86,15 @@ var FlowFlowApp = (function ($) {
 
     var la_plugin_slug_down = plugin;
 
+    // subscription handlers reject requests without the admin nonce
+    function cancelSubscriptionUrl() {
+        return vars.ajaxurl + '?action=flow_flow_cancel_subscription&security=' + encodeURIComponent(vars.nonce);
+    }
+
+    function signCancelSubscriptionLinks($container) {
+        $container.find('a[href*="action=flow_flow_cancel_subscription"]').attr('href', cancelSubscriptionUrl());
+    }
+
     // css variables
     if (plugin === 'insta_flow') {
         document.documentElement.style.setProperty('--main-ui-color', "#c13584");
@@ -199,7 +208,7 @@ var FlowFlowApp = (function ($) {
                     // custom plan
                     if (subscription.plan === $('boosts_custom_plan').val()) {
                         $('.boosts_custom .boost_custom__plan_txt').html('Plan ID ' + subscription.subscription_id + ' activated.')
-                        $('.boosts_custom .boost_custom__plan_actions').html('<a href="/wp-admin/admin-ajax.php?action=flow_flow_cancel_subscription" class="ff-pseudo-link">Cancel subscription</a>')
+                        $('.boosts_custom .boost_custom__plan_actions').html('<a href="' + cancelSubscriptionUrl() + '" class="ff-pseudo-link">Cancel subscription</a>')
                     }
 
                     // init drag n drop in any case after re-render
@@ -432,7 +441,7 @@ var FlowFlowApp = (function ($) {
 
                     })
                 } else if (subscription.state === 'deleted') {
-                    window.location.replace(vars.ajaxurl + '?action=flow_flow_cancel_subscription');
+                    window.location.replace(cancelSubscriptionUrl());
                 } else {
                     self.availableBoosts = 'not_active';
                 }
@@ -479,6 +488,7 @@ var FlowFlowApp = (function ($) {
             }
 
             $('#boosts .pricing-table').html(html)
+            signCancelSubscriptionLinks($('#boosts .pricing-table'));
 
             $('.pricing-table__item').filter('[data-plan]').each(function (index, el) {
 
@@ -1472,7 +1482,7 @@ var FlowFlowApp = (function ($) {
                     var id = $('#boosts_manual_id').val();
 
                     if (email && id) {
-                        window.location.replace(vars.ajaxurl + "?action=flow_flow_payment_success&email=" + email + "&checkout_id=" + id);
+                        window.location.replace(vars.ajaxurl + "?action=flow_flow_payment_success&email=" + encodeURIComponent(email) + "&checkout_id=" + encodeURIComponent(id) + "&security=" + encodeURIComponent(vars.nonce));
                     } else {
                         self.popup('Please enter both email and ID', false, 'alert');
                     }
@@ -1910,6 +1920,7 @@ var FlowFlowApp = (function ($) {
             // add pricing table html
             // assume it's 5
             $('#boosts .pricing-table').html(ff_templates.pricing_table_item + ff_templates.pricing_table_item + ff_templates.pricing_table_item + ff_templates.pricing_table_item + ff_templates.pricing_table_item)
+            signCancelSubscriptionLinks($('#boosts .pricing-table'));
 
             this.$html.addClass('page-loaded');
             $('.wrapper').css('opacity', 1);

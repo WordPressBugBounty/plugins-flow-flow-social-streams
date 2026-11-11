@@ -332,9 +332,17 @@
             this.$panel = $('.ff-live-editor-panel');
             
             var self = this;
-            setTimeout(function() {
-                self.$panel.addClass('ff-panel-ready');
-            }, 50);
+            if (self.$panel.length) {
+                // Force layout reflow so initial transform: translateX(100%) is applied without transition
+                void self.$panel[0].offsetHeight;
+                requestAnimationFrame(function() {
+                    requestAnimationFrame(function() {
+                        setTimeout(function() {
+                            self.$panel.addClass('ff-panel-ready');
+                        }, 100);
+                    });
+                });
+            }
         },
 
         bindEvents: function() {
@@ -458,6 +466,10 @@
 
             this.populateFields();
             this.updateConditionalFields();
+            if (!this.$panel.hasClass('ff-panel-ready')) {
+                void this.$panel[0].offsetHeight;
+                this.$panel.addClass('ff-panel-ready');
+            }
             this.$panel.addClass('open');
             $('.ff-live-editor-trigger').addClass('ff-panel-open');
 

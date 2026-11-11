@@ -13,156 +13,112 @@ use Exception;
  * @copyright Looks Awesome
  */
 class LAAdminModerationCacheManager extends LACacheManager {
-    protected $stream_moderation;
-
     function __construct( $context = null, $force = false ) {
         parent::__construct( $context, $force );
     }
 
-    public function setStream( $stream, $moderation = false ) {
-        parent::setStream($stream, $moderation);
-        $this->stream_moderation = $stream;
-    }
-
     public function moderate() {
-        $conn = $this->db->conn();
+        $conn = null;
+        $failure = null;
         try {
-            if ($conn->beginTransaction()){
-                $hash = \la\core\LAUtils::get_request_var('hash', 'post', 'text', '');
-                $action = \la\core\LAUtils::get_request_var('moderation_action', 'post', 'text', '');
-                $stream_id = \la\core\LAUtils::get_request_var('stream', 'post', 'text', '');
+            $conn = $this->db->conn();
+            if ($conn->beginTransaction() === false) throw new Exception('Could not begin moderation changes');
+            $hash = \la\core\LAUtils::get_request_var('hash', 'post', 'text', '');
+            $action = \la\core\LAUtils::get_request_var('moderation_action', 'post', 'text', '');
+            $stream_id = \la\core\LAUtils::get_request_var('stream', 'post', 'text', '');
+            $stream = $this->db->getStream($stream_id);
+            $feeds = [];
+            foreach ($stream['feeds'] as $feed) $feeds[] = $feed['id'];
 
-                $feeds = [];
-                $stream = $this->db->getStream($stream_id);
-                foreach ( $stream['feeds'] as $feed ) {
-                    $feeds[] = $feed['id'];
-                }
+            $where = $conn->parse("WHERE `feed_id` in (?a) AND `creation_index` <= ?i AND `post_status` = 'new'", $feeds, $this->decodeHash($hash));
+            $status = $action == 'new_posts_approve' ? 'approved' : 'disapproved';
+            $this->db->setPostStatus($status, $where, time());
 
-                $commonPartOfSql = $conn->parse("`feed_id` in (?a) AND `creation_index` <= ?i", $feeds, $this->decodeHash($hash));
-                $additionalPartOfSql = $conn->parse("`post_status` = 'new'");
-                $status = $action == 'new_posts_approve' ? 'approved' : 'disapproved';
+            $changed = \la\core\LAUtils::get_request_var('changed', 'post', 'raw', []);
+            $feedFilter = $conn->parse('`feed_id` in (?a)', $feeds);
+            foreach ($changed as $id => $item) {
                 $creation_index = time();
-                $this->db->setPostStatus($status, $conn->parse('WHERE ?p AND ?p', $commonPartOfSql, $additionalPartOfSql), $creation_index);
-
-                $changed_val = \la\core\LAUtils::get_request_var('changed', 'post', 'raw', null);
-                if ($changed_val !== null){
-                    $creation_index = time();
-                    $commonPartOfSql = $conn->parse("`feed_id` in (?a)", $feeds);
-                    $changed_data = $changed_val;
-                    foreach ( $changed_data as $id => $item ) {
-                        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                        error_log('Flow-Flow CTA Debug: Processing post ' . $id);
-                        // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-                        error_log('Flow-Flow CTA Debug: Item data: ' . print_r($item, true));
-                        
-                        // Process approval status (only if approved field is set)
-                        if (isset($item['approved'])) {
-                            $status = ($item['approved'] === "true" || $item['approved'] === true) ? 'approved' : 'disapproved';
-                            $this->db->setPostStatus($status, $conn->parse('WHERE ?p AND `post_id` = ?s', $commonPartOfSql, $id), $creation_index);
-                            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                            error_log('Flow-Flow CTA Debug: Set approval status to ' . $status);
+                if (isset($item['approved'])) {
+                    $status = ($item['approved'] === 'true' || $item['approved'] === true) ? 'approved' : 'disapproved';
+                    $this->db->setPostStatus($status, $conn->parse('WHERE ?p AND `post_id` = ?s', $feedFilter, $id), $creation_index);
+                }
+                if (isset($item['pinned'])) {
+                    $isPinned = ($item['pinned'] === '1' || $item['pinned'] === 1) ? 1 : 0;
+                    $pinnedOrder = isset($item['pinned_order']) ? (int)$item['pinned_order'] : time();
+                    if ($conn->query(
+                        'UPDATE ?n SET `is_pinned` = ?i, `pinned_order` = ?i, `creation_index` = ?i WHERE `post_id` = ?s AND ?p',
+                        $this->db->posts_table_name, $isPinned, $pinnedOrder, $creation_index, $id, $feedFilter
+                    ) === false) throw new Exception('Could not save pinned status');
+                }
+                if (!isset($item['cta'])) continue;
+                $cta = $item['cta'];
+                $ctaData = null;
+                if (!empty($cta['text']) || !empty($cta['ltext']) || !empty($cta['url'])) {
+                    $ctaData = [
+                        'text' => isset($cta['text']) ? sanitize_text_field($cta['text']) : '',
+                        'ltext' => isset($cta['ltext']) ? sanitize_text_field($cta['ltext']) : '',
+                        'url' => isset($cta['url']) ? esc_url_raw($cta['url']) : '',
+                        'color' => isset($cta['color']) ? $this->sanitize_hex_color($cta['color']) : '#e916b7',
+                        'new' => isset($cta['new']) ? sanitize_text_field($cta['new']) : 'nope',
+                        'open' => isset($cta['open']) ? sanitize_text_field($cta['open']) : 'nope',
+                        'likes' => isset($cta['likes']) ? (int)$cta['likes'] : 0
+                    ];
+                }
+                // One displayed post can match several feed/type rows. Lock
+                // and merge each independently to preserve its own counters.
+                $rows = $conn->getAll(
+                    'SELECT `post_id`, `feed_id`, `post_type`, `post_additional` FROM ?n WHERE `post_id` = ?s AND ?p ORDER BY `post_id`, `post_type`, `feed_id` FOR UPDATE',
+                    $this->db->posts_table_name, $id, $feedFilter
+                );
+                if (!is_array($rows)) throw new Exception('Could not read post metadata');
+                if (empty($rows)) throw new Exception('Post not found in this stream');
+                foreach ($rows as $row) {
+                    $additional = [];
+                    if ($row['post_additional'] !== null && $row['post_additional'] !== '') {
+                        $decoded = json_decode($row['post_additional']);
+                        if (json_last_error() !== JSON_ERROR_NONE) {
+                            throw new Exception('Invalid stored post metadata');
                         }
-                        
-                        // Process pinned status
-                        if (isset($item['pinned'])) {
-                            $isPinned = ($item['pinned'] === "1" || $item['pinned'] === 1) ? 1 : 0;
-                            $pinnedOrder = isset($item['pinned_order']) ? (int)$item['pinned_order'] : time();
-                            
-                            $conn->query(
-                                'UPDATE ?n SET `is_pinned` = ?i, `pinned_order` = ?i, `creation_index` = ?i WHERE `post_id` = ?s AND ?p',
-                                $this->db->posts_table_name,
-                                $isPinned,
-                                $pinnedOrder,
-                                $creation_index,
-                                $id,
-                                $commonPartOfSql
-                            );
-                            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                            error_log('Flow-Flow CTA Debug: Set pinned status to ' . $isPinned);
-                        }
-                        
-                        // Process CTA data
-                        if (isset($item['cta'])) {
-                            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                            error_log('Flow-Flow CTA Debug: Processing CTA for post ' . $id);
-                            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-                            error_log('Flow-Flow CTA Debug: CTA data: ' . print_r($item['cta'], true));
-                            
-                            // Get current post_additional data
-                            $current = $conn->getRow(
-                                'SELECT `post_additional` FROM ?n WHERE `post_id` = ?s AND ?p',
-                                $this->db->posts_table_name,
-                                $id,
-                                $commonPartOfSql
-                            );
-                            
-                            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-                            error_log('Flow-Flow CTA Debug: Current post_additional: ' . print_r($current, true));
-                            
-                            $additional = array();
-                            if (!empty($current['post_additional'])) {
-                                $additional = json_decode($current['post_additional'], true);
-                                if (!is_array($additional)) {
-                                    $additional = array();
-                                }
-                            }
-                            
-                            // Add/update CTA data
-                            $cta = $item['cta'];
-                            if (!empty($cta['text']) || !empty($cta['ltext']) || !empty($cta['url'])) {
-                                $additional['cta'] = array(
-                                    'text' => isset($cta['text']) ? sanitize_text_field($cta['text']) : '',
-                                    'ltext' => isset($cta['ltext']) ? sanitize_text_field($cta['ltext']) : '',
-                                    'url' => isset($cta['url']) ? esc_url_raw($cta['url']) : '',
-                                    'color' => isset($cta['color']) ? $this->sanitize_hex_color($cta['color']) : '#e916b7',
-                                    'new' => isset($cta['new']) ? sanitize_text_field($cta['new']) : 'nope',
-                                    'open' => isset($cta['open']) ? sanitize_text_field($cta['open']) : 'nope',
-                                    'likes' => isset($cta['likes']) ? (int)$cta['likes'] : 0
-                                );
-                                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-                                error_log('Flow-Flow CTA Debug: Prepared CTA data: ' . print_r($additional['cta'], true));
-                            } else {
-                                // Remove CTA if all fields are empty
-                                unset($additional['cta']);
-                                // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                                error_log('Flow-Flow CTA Debug: Removing CTA (all fields empty)');
-                            }
-                            
-                            // Update database
-                            $jsonData = json_encode($additional);
-                            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                            error_log('Flow-Flow CTA Debug: Saving to DB: ' . $jsonData);
-                            
-                            $result = $conn->query(
-                                'UPDATE ?n SET `post_additional` = ?s, `creation_index` = ?i WHERE `post_id` = ?s AND ?p',
-                                $this->db->posts_table_name,
-                                $jsonData,
-                                $creation_index,
-                                $id,
-                                $commonPartOfSql
-                            );
-                            
-                            // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                            error_log('Flow-Flow CTA Debug: Update result: ' . ($result ? 'SUCCESS' : 'FAILED'));
-                        }
+                        $additional = is_object($decoded) || is_array($decoded) ? (array)$decoded : [];
                     }
+                    if ($ctaData === null) unset($additional['cta']);
+                    else $additional['cta'] = $ctaData;
+                    $jsonData = json_encode($additional);
+                    if ($jsonData === false) throw new Exception('Could not encode post metadata');
+                    if ($conn->query(
+                        'UPDATE ?n SET `post_additional` = ?s, `creation_index` = ?i WHERE `post_id` = ?s AND `feed_id` = ?s AND `post_type` = ?s',
+                        $this->db->posts_table_name, $jsonData, $creation_index,
+                        $row['post_id'], $row['feed_id'], $row['post_type']
+                    ) === false) throw new Exception('Could not save post metadata');
                 }
-                if (class_exists('\la\core\cache\LATransientCache')) {
-                    \la\core\cache\LATransientCache::invalidateStream($stream_id);
-                }
-                $conn->commit();
-                $conn->close();
-                die();
             }
-            $conn->rollbackAndClose();
-            die();
-        } catch ( Exception $e ){
-            $conn->rollbackAndClose();
-            // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-            die(function_exists('esc_html') ? esc_html($e->getMessage()) : htmlspecialchars($e->getMessage(), ENT_QUOTES, 'UTF-8'));
+            if ($conn->commit() === false) throw new Exception('Could not commit moderation changes');
+        } catch (\Throwable $error) {
+            $failure = $error;
+            if ($conn) {
+                try { $conn->rollback(); } catch (\Throwable $rollbackError) {
+                    \flow\FFLogManager::log('Could not roll back moderation changes', ['error' => $rollbackError->getMessage()]);
+                }
+            }
+        } finally {
+            if ($conn) {
+                try { $conn->close(); } catch (\Throwable $closeError) {
+                    \flow\FFLogManager::log('Could not close moderation connection', ['error' => $closeError->getMessage()]);
+                }
+            }
         }
+        if ($failure) {
+            if (function_exists('status_header')) status_header(500);
+            die(function_exists('esc_html') ? esc_html($failure->getMessage()) : htmlspecialchars($failure->getMessage(), ENT_QUOTES, 'UTF-8'));
+        }
+        // Posts can belong to several streams through the same feed. Cache
+        // failure cannot undo the committed moderation changes.
+        try { LATransientCache::invalidateAll(); } catch (\Throwable $cacheError) {
+            \flow\FFLogManager::log('Could not invalidate moderation responses', ['error' => $cacheError->getMessage()]);
+        }
+        die();
     }
-    
+
     /**
      * Sanitize hex color value
      * @param string $color
@@ -238,30 +194,15 @@ class LAAdminModerationCacheManager extends LACacheManager {
     }
 
     public function hash() {
-        if (!$this->stream_moderation) {
+        if (!$this->stream) {
             return parent::hash();
         }
         $conn = $this->db->conn();
         $feeds = [];
-        foreach ( $this->stream_moderation->getAllFeeds() as $feed ) {
+        foreach ( $this->stream->getAllFeeds() as $feed ) {
             $feeds[] = $feed['id'];
         }
         $hash = $conn->getOne("SELECT MAX(`creation_index`) FROM ?n WHERE `feed_id` in (?a)", $this->db->posts_table_name, $feeds);
         return $this->encodeHash($hash ? $hash : time());
-    }
-
-    public function transientHash($streamId) {
-        $hash = $this->db->getLastUpdateHash($streamId);
-        return (false !== $hash) ? $this->encodeHash($hash) : '';
-    }
-
-    private function encodeHash($hash){
-        if (!empty($hash) && $this->stream_moderation){
-            $postfix  = hash('md5', serialize($this->stream_moderation->original()));
-            $postfix .= hash('md5', serialize(\la\core\settings\LAGeneralSettings::get()->original()));
-            $postfix .= hash('md5', serialize(\la\core\settings\LAGeneralSettings::get()->originalAuth()));
-            return $hash . "." . $postfix;
-        }
-        return $hash;
     }
 }

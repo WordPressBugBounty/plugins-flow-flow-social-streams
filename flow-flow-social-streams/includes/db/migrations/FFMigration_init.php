@@ -13,6 +13,11 @@ use la\core\db\migrations\LADBMigrationBase;
  * @copyright Looks Awesome
  */
 class FFMigration_init extends LADBMigrationBase{
+    public function execute($conn, $manager) {
+        parent::execute($conn, $manager);
+        (new FFMigration_5_2())->execute($conn, $manager);
+    }
+
     protected function create_posts_table( $conn, $table_name ) {
         $charset = $this->charset();
         $collate = $this->collate();
@@ -41,7 +46,10 @@ class FFMigration_init extends LADBMigrationBase{
 				`smart_order` INT,
 				`post_status` VARCHAR(15),
 				`post_source` VARCHAR(300),
-				`post_additional` VARCHAR(300),
+				`post_additional` TEXT,
+                `is_pinned` TINYINT(1) DEFAULT 0,
+                `pinned_order` INT DEFAULT 0,
+                INDEX idx_pinned (`is_pinned`, `pinned_order`),
 				`user_bio` TEXT,
 				`user_counts_media` INT,
 				`user_counts_follows` INT,
@@ -61,6 +69,7 @@ class FFMigration_init extends LADBMigrationBase{
 				`last_update` INT NOT NULL,
 				`status` INT NOT NULL DEFAULT 0,
 				`errors` BLOB,
+                `error_timestamp` INT DEFAULT 0,
 				`settings` BLOB,
 				`enabled` TINYINT(1) DEFAULT 0,
 				`system_enabled` TINYINT(1) DEFAULT 1,

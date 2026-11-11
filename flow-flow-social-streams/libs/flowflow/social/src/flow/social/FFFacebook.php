@@ -154,7 +154,7 @@ class FFFacebook extends FFHttpRequestFeed implements LAFeedWithComments
 							throw new \Exception('Facebook: Unsupported get request — check token type (Page vs User), permissions (pages_show_list, pages_read_engagement), and that the Page is linked to the IG account.');
 						}
 
-						error_log($exception->getMessage());
+						\la\core\LAUtils::errorLog($exception->getMessage());
 						$this->debugLog("deferredInit exception", $exception->getMessage());
 					}
 
@@ -279,15 +279,10 @@ class FFFacebook extends FFHttpRequestFeed implements LAFeedWithComments
 			if (isset($item->attachments) && isset($item->attachments->data) && sizeof($item->attachments->data) > 0) {
 				$subattachments = $this->getSubattachments($item);
 				if (sizeof($subattachments) > 0) {
-					error_log('FFFacebook showImage added_video debug:');
-					error_log('subattachments: ' . print_r($subattachments, true));
 					$this->debugLog('FFFacebook showImage added_video debug:', ['subattachments' => $subattachments]);
 					$image = $subattachments[0];
-					error_log('image: ' . print_r($image, true));
 					$width = $image->width;
-					error_log('width: ' . $width);
 					$height = $image->height;
-					error_log('height: ' . $height);
 					if ($width > 600) {
 						$height = FFFeedUtils::getScaleHeight(600, $width, $height);
 						$width = 600;
@@ -305,13 +300,11 @@ class FFFacebook extends FFHttpRequestFeed implements LAFeedWithComments
 								$height = $videoInfo->height;
 							}
 							$this->media = $this->createMedia($videoUrl /* . '&appId=140463540033583' */ , $width, $height, 'video');
-							error_log('from id: ' . $videoUrl);
 
 						} else {
 							$this->media = $this->createMedia('http://www.facebook.com/video/embed?video_id=' . $item->object_id, $width, $height, 'video');
 						}
 
-						error_log('media: ' . print_r($this->media, true));
 						$this->debugLog('media created', $this->media);
 					}
 
@@ -616,8 +609,8 @@ class FFFacebook extends FFHttpRequestFeed implements LAFeedWithComments
 
 		$fields = urlencode('id,access_token');
 		$url = "https://graph.facebook.com/v12.0/me/accounts?fields={$fields}&access_token={$accessToken}";
-		//		error_log('getPageToken');
-//		error_log($url);
+		//		\la\core\LAUtils::errorLog('getPageToken');
+//		\la\core\LAUtils::errorLog($url);
 		$this->debugLog("getPageToken URL", $url);
 
 		$page_access_token = $accessToken; // default value is user token, if page token found, return it otherwise

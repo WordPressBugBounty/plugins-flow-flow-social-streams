@@ -74,7 +74,7 @@ class FlowFlowActivator extends LAActivatorBase
             'plugin_basename' => function_exists('plugin_basename') ? plugin_basename($file) : basename(dirname($file)) . '/' . basename($file),
             'admin_url' => admin_url('admin-ajax.php'),
             'table_name_prefix' => $wpdb->prefix . 'ff_',
-            'version' => '5.0.5',
+            'version' => '5.0.8',
             'faq_url' => 'https://docs.social-streams.com/',
             'count_posts_4init' => 30
         ];
@@ -112,6 +112,7 @@ class FlowFlowActivator extends LAActivatorBase
         wp_clear_scheduled_hook('flow_flow_check_tiktok_token');
         wp_clear_scheduled_hook('flow_flow_check_linkedin_token');
         wp_clear_scheduled_hook('flow_flow_trim_debug_log');
+        wp_clear_scheduled_hook('flow_flow_cleanup_linkedin_images');
     }
 
     protected function beforePluginLoad()
@@ -124,7 +125,7 @@ class FlowFlowActivator extends LAActivatorBase
             do_action('flow_flow_addon_loaded', $this->context);
         } catch (\Error $e) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($e->getMessage());
+            \la\core\LAUtils::errorLog($e->getMessage());
         }
 
         if (!defined('FF_AJAX_URL')) {
@@ -181,6 +182,45 @@ class FlowFlowActivator extends LAActivatorBase
             FFLogManager::trimLog($file, $maxSize, $keepSize);
         });
 
+        add_action('flow_flow_cleanup_linkedin_images', function () {
+            $uploads = wp_upload_dir();
+            if (!is_array($uploads) || !empty($uploads['error'])) return;
+            $dir = $uploads['basedir'] . '/flow-flow/linkedin';
+            if (!is_dir($dir)) return;
+
+            try {
+                $dbm = LAUtils::dbm($this->context);
+                $conn = $dbm->conn();
+                $referenced = [];
+                $rows = $conn->getAll(
+                    'SELECT `image_url`, `media_url`, `user_pic` FROM ?n WHERE `post_type` = ?s',
+                    $dbm->posts_table_name, 'linkedin'
+                );
+                $mediaRows = $conn->getAll(
+                    'SELECT `media_url` FROM ?n WHERE `post_type` = ?s',
+                    $dbm->post_media_table_name, 'linkedin'
+                );
+                foreach (array_merge((array)$rows, (array)$mediaRows) as $row) {
+                    foreach ((array)$row as $url) {
+                        if (is_string($url) && strpos($url, '/flow-flow/linkedin/') !== false) {
+                            $referenced[basename(parse_url($url, PHP_URL_PATH))] = true;
+                        }
+                    }
+                }
+
+                // Only delete files unreferenced by any stored post and older than 7 days,
+                // so an in-flight refresh can't lose a file it just wrote
+                $minAge = time() - 7 * 86400;
+                foreach ((array)glob($dir . '/*.{jpg,png,gif,webp}', GLOB_BRACE) as $file) {
+                    if (!isset($referenced[basename($file)]) && @filemtime($file) < $minAge) {
+                        @unlink($file);
+                    }
+                }
+            } catch (\Throwable $e) {
+                FFLogManager::log('cleanup_linkedin_images failed: ' . $e->getMessage());
+            }
+        });
+
         // Schedule events during init, avoiding cron/ajax/cli contexts and respecting DISABLE_WP_CRON
         add_action('init', function () {
             if (
@@ -232,6 +272,10 @@ class FlowFlowActivator extends LAActivatorBase
 
             if (false == wp_next_scheduled('flow_flow_trim_debug_log')) {
                 wp_schedule_event(time() + 86400, 'daily', 'flow_flow_trim_debug_log');
+            }
+
+            if (false == wp_next_scheduled('flow_flow_cleanup_linkedin_images')) {
+                wp_schedule_event(time() + 86400, 'daily', 'flow_flow_cleanup_linkedin_images');
             }
         }, 20);
     }
@@ -291,6 +335,9 @@ class FlowFlowActivator extends LAActivatorBase
         // Status panel utilities: run cron now and get/clear debug log
         add_action('wp_ajax_' . $slug_down . '_cron_run', function () use ($slug_down) {
             check_ajax_referer('flow_flow_nonce', 'nonce');
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['message' => 'Not allowed'], 403);
+            }
             $hook = isset($_POST['hook']) ? sanitize_text_field(wp_unslash($_POST['hook'])) : '';
             $allowed = [
                 'flow_flow_load_cache',
@@ -300,6 +347,7 @@ class FlowFlowActivator extends LAActivatorBase
                 'flow_flow_check_tiktok_token',
                 'flow_flow_check_linkedin_token',
                 'flow_flow_trim_debug_log',
+                'flow_flow_cleanup_linkedin_images',
             ];
             if (!in_array($hook, $allowed, true)) {
                 wp_send_json_error(['message' => 'Invalid hook']);
@@ -310,8 +358,21 @@ class FlowFlowActivator extends LAActivatorBase
             wp_send_json_success(['message' => 'Executed ' . $hook]);
         });
 
+        add_action('wp_ajax_' . $slug_down . '_clear_linkedin_backoff', function () {
+            check_ajax_referer('flow_flow_nonce', 'nonce');
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['message' => 'Not allowed'], 403);
+            }
+            delete_transient('ff_li_img_backoff_until');
+            delete_transient('ff_li_img_backoff_level');
+            wp_send_json_success(['message' => 'LinkedIn Images API backoff cleared successfully']);
+        });
+
         add_action('wp_ajax_' . $slug_down . '_debug_log', function () {
             check_ajax_referer('flow_flow_nonce', 'nonce');
+            if (!current_user_can('manage_options')) {
+                wp_send_json_error(['message' => 'Not allowed'], 403);
+            }
             $action = isset($_POST['subaction']) ? sanitize_text_field(wp_unslash($_POST['subaction'])) : 'get';
             $file = defined('FF_LOG_FILE_DEST') ? FF_LOG_FILE_DEST : plugin_dir_path(__DIR__) . 'flow-flow-debug.log';
 
@@ -409,14 +470,14 @@ class FlowFlowActivator extends LAActivatorBase
         // check if error related to flow-flow
         if (strpos($error['file'], 'flow-flow-social-streams') !== false && isset($fatals[$error['type']])) {
 
-            // error_log(print_r(debug_backtrace(), true));
+            // \la\core\LAUtils::errorLog(print_r(debug_backtrace(), true));
 
             $msg = $fatals[$error['type']] . ': ' . $error['message'] . ' in ';
             $msg .= $error['file'] . ' on line ' . $error['line'] . PHP_EOL;
 
             if (!empty($msg)) {
                 $error_log_func = 'error_log';
-                $error_log_func($msg, 3, FF_LOG_FILE_DEST);
+                $error_log_func(LAUtils::redactSecrets($msg), 3, FF_LOG_FILE_DEST);
             }
 
         }

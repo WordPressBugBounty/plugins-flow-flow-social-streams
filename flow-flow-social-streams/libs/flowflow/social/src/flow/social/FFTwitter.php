@@ -31,7 +31,6 @@ class FFTwitter extends FFBaseFeed{
 	private $image;
 	private $media;
 	private $carousel;
-	private $feed;
 
 	public function __construct() {
 		parent::__construct( 'twitter' );
@@ -158,7 +157,7 @@ class FFTwitter extends FFBaseFeed{
 				$search_query .= ' lang:' . $feed->lang;
 			}
 			$params['query'] = $search_query;
-			$params['max_results'] = max(10, min(100, $this->count));
+			$params['max_results'] = max(10, min(100, $this->getCount()));
 			$url = "https://api.twitter.com/2/tweets/search/recent";
 		} else {
 			// Other feeds require user ID resolution
@@ -169,7 +168,7 @@ class FFTwitter extends FFBaseFeed{
 			}
 
 			if ($timeline_type === 'home_timeline' || $timeline_type === 'user_timeline') {
-				$params['max_results'] = max(5, min(100, $this->count));
+				$params['max_results'] = max(5, min(100, $this->getCount()));
 				$exclude = [];
 				if (empty($feed->replies) || $feed->replies === 'nope') {
 					$exclude[] = 'replies';
@@ -183,7 +182,7 @@ class FFTwitter extends FFBaseFeed{
 				}
 				$url = "https://api.twitter.com/2/users/{$user_id}/tweets";
 			} elseif ($timeline_type === 'favorites') {
-				$params['max_results'] = max(5, min(100, $this->count));
+				$params['max_results'] = max(5, min(100, $this->getCount()));
 				$url = "https://api.twitter.com/2/users/{$user_id}/liked_tweets";
 			} elseif ($timeline_type === 'list_timeline') {
 				$list_name = $feed->{'list-name'};
@@ -196,7 +195,7 @@ class FFTwitter extends FFBaseFeed{
 					);
 					return array();
 				}
-				$params['max_results'] = max(5, min(100, $this->count));
+				$params['max_results'] = max(5, min(100, $this->getCount()));
 				$url = "https://api.twitter.com/2/lists/{$list_id}/tweets";
 			} else {
 				// collection_timeline is removed

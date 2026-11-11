@@ -29,9 +29,22 @@ use flow\FFLogManager;
  * @property LAStreamSettings $stream
  */
 class LACacheManager implements LACache{
+    /**
+     * Keys of `post_additional` written by the plugin itself (admin CTA, visitor
+     * engagement counters) rather than by the feed API. Only these may keep their
+     * stored value when a post is refetched; everything else the API returns wins.
+     */
+    private static $LOCAL_ADDITIONAL_KEYS = ['cta', 'engagement'];
+
+    /**
+     * Set by internal refresh dispatchers to bypass cache lifetimes. The public
+     * `force` request parameter is honored only for administrators.
+     */
+    public static $forceRefresh = false;
+
     private $force;
     private $feeds;
-    private $stream;
+    protected $stream;
     private $hash = '';
     private $errors = [];
 
@@ -50,122 +63,108 @@ class LACacheManager implements LACache{
 	 * @return array
 	 */
 	public function posts($feeds, $disableCache){
-		if (isset($_REQUEST['clean']) && $_REQUEST['clean']) $this->db->clean();
-		if (isset($_REQUEST['clean-stream']) && $_REQUEST['clean-stream']) $this->db->clean( [ $this->stream->getId() ] );
 		$this->feeds = $feeds;
-		if ($this->force){
-            //$conn = $this->db->conn(); // Don't hold a single connection reference
-			$hasNewItems = false;
-			$this->hash = time();
-			$authErrorsToHandle = []; // Collect auth errors to handle after DB closes
-			
-			/** @var FFFeed $feed */
-			foreach ( $feeds as $feed_id => $feed ) {
-				// Concurrency Lock
-				$lock_key = 'ff_feed_lock_' . $feed_id;
-				if (get_transient($lock_key)) {
-					continue;
-				}
-				set_transient($lock_key, 1, 300); // 5 min lock
-
-				try{
-                    $status = ['status' => empty($feed->feed->errors) ? '1' : '0', 'errors' => serialize([])];
-					if ($this->expiredLifeTime($feed_id)) {
-						$exist_feed_ids = $this->db->getIdPosts($feed_id);
-						
-						// Close connection before API call to prevent "max_user_connections" error
-						if ($this->db->conn() != null) {
-							$this->db->conn()->close();
-						}
-
-						$posts = $feed->posts(empty($exist_feed_ids));
-						
-						$errors = $feed->errors();
-						$countGotPosts = sizeof( $posts );
-						$criticalError = ($countGotPosts == 0 && sizeof($errors) > 0 && $feed->hasCriticalError());
-						$status = [
-							'last_update' => $criticalError ? 0 : time(), 
-							'errors' => $this->serializeErrors($errors), 
-							'error_timestamp' => $criticalError ? time() : 0,
-							'status' => (int)(!$criticalError)
-						];
-						
-						if (!$criticalError){
-							list($new_posts, $existed_posts) = $this->separation($exist_feed_ids, $posts);
-							$countPosts4Insert = sizeof($new_posts);
-							
-							// Re-open connection for saving
-							$conn = $this->db->conn(true);
-							if ($conn->beginTransaction()){
-								$this->save( $feed, $posts);
-
-								if ($countPosts4Insert > 0) {
-									$this->db->setOrders($feed_id);
-									$hasNewItems = true;
-								}
-							}
-						}
-						if (isset($feed->feed->system_enabled) && $feed->feed->system_enabled != (int)!$criticalError) {
-							$this->db->systemDisableSource($feed_id, (int)!$criticalError);
-						}
-                    }
-                    $this->db->saveSource($feed_id, $status);
-                    
-                    // Commit if transaction is active or just ensure data is flushed
-                    $this->db->conn()->commit();
-                }
-                catch( Exception $e){
-                    $this->db->conn()->rollback();
-                    
-                    // Check for DB structure errors and attempt repair
-                    $msg = $e->getMessage();
-                    if (strpos($msg, "doesn't exist") !== false || strpos($msg, "Unknown column") !== false || strpos($msg, "Data too long") !== false) {
-                        FFLogManager::log('DB structure error detected, attempting repair...', ['error' => $msg]);
-                        $this->db->repairDB();
-                    }
-                    
-					$hasNewItems = false;
-					$errors = [];
-					$errors[] = [
-						'type' => $feed->getType(),
-						'message' => $e->getMessage(),
-						'code' => $e->getCode()
-					];
+        if ($this->force) {
+            $hasNewItems = false;
+            $this->hash = time();
+            $authErrorsToHandle = [];
+            foreach ($feeds as $feed_id => $feed) {
+                $lock_key = 'ff_feed_lock_' . $feed_id;
+                if (get_transient($lock_key)) continue;
+                set_transient($lock_key, 1, 300);
+                $providerPhase = false;
+                $previousStatus = null;
+                $conn = null;
+                try {
+                    // Keep the handle even if a later pre-fetch read loses it.
+                    $conn = $this->db->conn();
+                    // Preserve the last refresh's status and errors until it expires.
+                    if (!$this->expiredLifeTime($feed_id)) continue;
+                    $previousStatus = $this->db->conn()->getRow(
+                        'SELECT status, system_enabled, errors, settings FROM ?n WHERE feed_id=?s',
+                        $this->db->cache_table_name, $feed_id
+                    );
+                    $existingIds = $this->db->getIdPosts($feed_id);
+                    $this->db->conn()->close();
+                    $providerPhase = true;
+                    $posts = $feed->posts(empty($existingIds));
+                    $errors = $feed->errors();
+                    $criticalError = empty($posts) && !empty($errors) && $feed->hasCriticalError();
+                    $providerPhase = false;
                     $status = [
-                        'last_update' => 0, 
-                        'errors' => $this->serializeErrors($errors), 
-                        'error_timestamp' => time(),
-                        'status' => 0, 
-                        'system_enabled' => 0, 
-                        'send_email' => 0
+                        'errors' => $this->serializeErrors($errors),
+                        'error_timestamp' => $criticalError ? time() : 0,
+                        'status' => $criticalError ? 0 : 1
                     ];
-                    $this->db->saveSource($feed->id(), $status);
-                    $this->db->conn()->commit();
-                    
-                    // Collect auth errors to handle after DB connection closes
-                    $authErrorsToHandle[] = ['feed' => $feed, 'exception' => $e];
-				}
-
-				delete_transient($lock_key);
-			}
-			
-			if ($hasNewItems){
-				$this->removeOldRecords();
-                $this->db->conn()->commit();
-			}
-			
-			// Clean up old errors (older than 30 days)
-			$this->cleanupOldErrors();
-			$this->db->conn()->commit();
-
+                    if (!$criticalError) $status['last_update'] = time();
+                    if (isset($feed->feed->system_enabled) && $feed->feed->system_enabled != (int)!$criticalError) {
+                        $status['system_enabled'] = (int)!$criticalError;
+                        if ($criticalError) $status['send_email'] = 0;
+                    }
+                    $conn = $this->db->conn(true);
+                    if ($conn->beginTransaction() === false) throw new Exception('Could not begin feed refresh');
+                    if ($this->settingsChangedDuringFetch($feed_id, $previousStatus)) {
+                        // An admin saved this feed while it was being fetched, and their
+                        // refresh skipped it because of the lock. Discard the stale
+                        // fetch and expire the feed so the next refresh uses the new settings.
+                        if ($this->db->saveSource($feed_id, ['last_update' => 0]) === false || $conn->commit() === false) {
+                            throw new Exception('Could not discard stale feed refresh');
+                        }
+                        continue;
+                    }
+                    $newPosts = [];
+                    if (!$criticalError) {
+                        $savedPosts = $this->save($feed, $posts);
+                        list($newPosts) = $this->separation($existingIds, $savedPosts);
+                        if (!empty($newPosts) && $this->db->setOrders($feed_id) === false) {
+                            throw new Exception('Could not update feed post order');
+                        }
+                    }
+                    if ($this->db->saveSource($feed_id, $status) === false) throw new Exception('Could not save feed refresh status');
+                    if ($conn->commit() === false) throw new Exception('Could not commit feed refresh');
+                    $hasNewItems = $hasNewItems || !empty($newPosts);
+                    if (!empty($posts) || $this->sourceOutputChanged($previousStatus, $status)) $this->invalidateResponses();
+                } catch (\Throwable $error) {
+                    // Roll back provider content and local metadata together. A
+                    // storage failure is not evidence that credentials expired.
+                    try { if ($conn) $conn->rollback(); } catch (\Throwable $rollbackError) {
+                        FFLogManager::log('Could not roll back feed refresh', ['error' => $rollbackError->getMessage()]);
+                    }
+                    $status = [
+                        'errors' => $this->serializeErrors([['type' => $feed->getType(), 'message' => $error->getMessage(), 'code' => $error->getCode()]]),
+                        'error_timestamp' => time(),
+                        'status' => 0
+                    ];
+                    if ($providerPhase) {
+                        $status['system_enabled'] = 0;
+                        $status['send_email'] = 0;
+                        $authErrorsToHandle[] = ['feed' => $feed, 'exception' => $error];
+                    }
+                    try {
+                        $conn = $this->db->conn();
+                        if ($conn->beginTransaction() === false || $this->db->saveSource($feed_id, $status) === false || $conn->commit() === false) {
+                            throw new Exception('Could not record feed refresh failure');
+                        }
+                        if ($this->sourceOutputChanged($previousStatus, $status)) $this->invalidateResponses();
+                    } catch (\Throwable $statusError) {
+                        try { if ($conn) $conn->rollback(); } catch (\Throwable $ignored) {}
+                        FFLogManager::log('Could not record feed refresh failure', ['error' => $statusError->getMessage()]);
+                    }
+                } finally {
+                    delete_transient($lock_key);
+                }
+            }
+            if ($hasNewItems) {
+                $this->removeOldRecords();
+                if ($this->db->conn()->commit() !== false) $this->invalidateResponses();
+            }
+            $errorsChanged = $this->cleanupOldErrors();
+            if ($this->db->conn()->commit() !== false && $errorsChanged) $this->invalidateResponses();
             $this->db->conn()->rollbackAndClose();
-            
-            // Handle auth errors after DB connection is safely closed
             foreach ($authErrorsToHandle as $errorInfo) {
                 $this->handleAuthError($errorInfo['feed'], $errorInfo['exception']);
             }
-            
-			return [];
+            return [];
 		} else {
 			// When disable-cache setting is ON, skip API entirely and just return DB posts
 			if ($disableCache || LAGeneralSettings::get()->isCacheDisabled()) {
@@ -174,9 +173,7 @@ class LACacheManager implements LACache{
 			
 			if (empty($_REQUEST['hash'])){
 				$this->force = true;
-				$_REQUEST['force'] = true;
 				$this->posts($feeds, $disableCache);
-				if (isset($_REQUEST['force'])) unset($_REQUEST['force']);
 				$_REQUEST['hash'] = $this->hash();
 			}
 			return $this->get();
@@ -186,6 +183,39 @@ class LACacheManager implements LACache{
 	public function hash(){
 		return $this->encodeHash($this->hash);
 	}
+
+    private function settingsChangedDuringFetch($feed_id, $before) {
+        if (!is_array($before) || !array_key_exists('settings', $before)) return false;
+        $current = $this->db->conn()->getOne(
+            'SELECT `settings` FROM ?n WHERE `feed_id` = ?s FOR UPDATE', $this->db->cache_table_name, $feed_id
+        );
+        return $current !== false && (string)$current !== (string)$before['settings'];
+    }
+
+    /** Ignore internal timestamps when a repeated failure leaves public output unchanged. */
+    private function sourceOutputChanged($before, $after) {
+        if (!is_array($before)) return true;
+        foreach (['status', 'system_enabled', 'errors'] as $key) {
+            if (!array_key_exists($key, $after)) continue;
+            $old = isset($before[$key]) ? $before[$key] : null;
+            $new = $after[$key];
+            if ($key === 'errors') {
+                $old = empty($old) ? serialize([]) : (is_array($old) ? serialize($old) : $old);
+                $new = empty($new) ? serialize([]) : (is_array($new) ? serialize($new) : $new);
+            }
+            if ((string)$old !== (string)$new) return true;
+        }
+        return false;
+    }
+
+    /** A cache hook failure must not turn an already committed refresh into a failure. */
+    private function invalidateResponses() {
+        try {
+            LATransientCache::invalidateAll();
+        } catch (\Throwable $error) {
+            FFLogManager::log('Could not invalidate feed responses', ['error' => $error->getMessage()]);
+        }
+    }
 
 	public function transientHash($streamId){
 		$hash = $this->db->getLastUpdateHash($streamId);
@@ -270,13 +300,12 @@ class LACacheManager implements LACache{
 
 		    if ($page == 0){
 			    $result = $this->getOnlyNew($moderation);
-			    if (!isset($_REQUEST['countOfPages'])){
-				    $totalCount = $this->db->countPostsIf($where);
-				    if ($totalCount === false) $totalCount = 0;
-				    $countOfPages = ($limit > $totalCount) ? 1 : ceil($totalCount / $limit);
-				    $_REQUEST['countOfPages'] = $countOfPages;
-			    }
 		    }
+		    // Always derive the page count from storage; a client-supplied value
+		    // would otherwise be echoed into shared cached responses.
+		    $totalCount = $this->db->countPostsIf($where);
+		    if ($totalCount === false) $totalCount = 0;
+		    $_REQUEST['countOfPages'] = ($limit > $totalCount) ? 1 : ceil($totalCount / $limit);
 	    }
 	    $resultFromDB = $this->db->getPostsIf($this->getGetFields(), $where, $order, $offset, $limit);
 	    if (false === $resultFromDB) $resultFromDB = [];
@@ -295,40 +324,51 @@ class LACacheManager implements LACache{
 	 * @param $value
 	 *
 	 * @throws Exception
-	 * @return void
+	 * @return array Successfully persisted provider posts.
 	 */
 	private function save( $feed, $value ) {
+		$savedPosts = [];
 		if (sizeof($value) > 0) {
             $timezone = get_option( 'timezone_string' );
             $conn = $this->db->conn();
             $only4insertPartOfSqlTemplate = $conn->parse('`creation_index`=?i', $this->hash);
             $status = $this->getDefaultStreamStatus($feed);
+            $jsonOptions = defined('JSON_INVALID_UTF8_SUBSTITUTE') ? JSON_INVALID_UTF8_SUBSTITUTE : 0;
 
-            // Fetch existing post_additional to merge and preserve engagement/cta/boost data
+            // Fetch existing post_additional so plugin-owned keys survive the refresh
             $existingAdditionals = [];
             $postIds = [];
             foreach ($value as $post) {
                 $postIds[] = $post->id;
             }
             if (!empty($postIds)) {
-                try {
-                    $rows = $conn->getAll(
-                        'SELECT `post_id`, `post_additional` FROM ?n WHERE `feed_id` = ?s AND `post_id` IN (?a)',
-                        $this->db->posts_table_name, $feed->id(), $postIds
-                    );
-                    if (is_array($rows)) {
-                        foreach ($rows as $row) {
-                            $existingAdditionals[$row['post_id']] = $row['post_additional'];
-                        }
-                    }
-                } catch (\Throwable $e) {
-                    // Fail-safe
+                $rows = $conn->getAll(
+                    'SELECT `post_id`, `post_type`, `post_additional` FROM ?n WHERE `feed_id` = ?s AND `post_id` IN (?a) ORDER BY `post_id`, `post_type` FOR UPDATE',
+                    $this->db->posts_table_name, $feed->id(), $postIds
+                );
+                if (!is_array($rows)) throw new Exception('Could not read existing post metadata');
+                foreach ($rows as $row) {
+                    $existingAdditionals[$row['post_type']][$row['post_id']] = $row['post_additional'];
                 }
             }
 
 	        foreach ($value as $id => $post){
 		        FFLogManager::log('Saving post to DB', ['feed_id' => $post->feed_id, 'post_id' => $post->id]);
 		        $feed_id = $post->feed_id;
+                // JSON content has its own UTF-8 substitution below. Normalize
+                // fields written directly to SQL in each storage mode.
+                $textFields = FF_ALTERNATIVE_POST_STORAGE ? ['nickname'] : ['header', 'text', 'nickname', 'screenname'];
+                foreach ($textFields as $field) {
+                    if (isset($post->$field) && is_string($post->$field)) $post->$field = $this->scrubUtf8($post->$field);
+                }
+                $bio = isset($post->userMeta->bio) ? $post->userMeta->bio . (isset($post->userMeta->website) ? ' ' . $post->userMeta->website : '') : '';
+                if (!FF_ALTERNATIVE_POST_STORAGE) $bio = $this->scrubUtf8($bio);
+                $encodedBio = isset($post->userMeta->bio) ? json_encode($bio, $jsonOptions) : '';
+                $encodedLocation = isset($post->location) ? json_encode($post->location, $jsonOptions) : '';
+                if ($encodedBio === false || $encodedLocation === false) {
+                    FFLogManager::log('Skipping post with unencodable bio or location', ['feed_id' => $feed_id, 'post_id' => $post->id]);
+                    continue;
+                }
 
 		        $imagePartOfSql = (isset($post->img) && sizeof($post->img) == 3) ?
                     $conn->parse('`image_url`=?s, `image_width`=?i, `image_height`=?i,',
@@ -343,23 +383,43 @@ class LACacheManager implements LACache{
                     $incomingAdd = is_object($post->additional) ? (array)$post->additional : (is_array($post->additional) ? $post->additional : []);
                 }
 
-                // Extract existing additional fields to merge (precedence to existing)
-                $existingAdd = [];
-                if (!empty($existingAdditionals[$post->id])) {
-                    $decoded = json_decode($existingAdditionals[$post->id], true);
-                    if (is_array($decoded)) {
-                        $existingAdd = $decoded;
+                // Keep only the plugin-owned keys from the stored copy; API-provided
+                // fields (counts, media urls) must follow the freshly fetched payload.
+                $preservedAdd = [];
+                $keepStoredAdditional = false;
+                if (isset($existingAdditionals[$post->type][$post->id]) && $existingAdditionals[$post->type][$post->id] !== '') {
+                    $decoded = json_decode($existingAdditionals[$post->type][$post->id], true);
+                    if (json_last_error() !== JSON_ERROR_NONE) {
+                        // Preserve damaged metadata verbatim while still updating
+                        // provider content and the other posts in this feed.
+                        $keepStoredAdditional = true;
+                        FFLogManager::log('Preserving invalid stored post metadata', ['feed_id' => $feed_id, 'post_id' => $post->id]);
+                    } elseif (is_array($decoded)) {
+                        foreach (self::$LOCAL_ADDITIONAL_KEYS as $localKey) {
+                            if (array_key_exists($localKey, $decoded)) {
+                                $preservedAdd[$localKey] = $decoded[$localKey];
+                            }
+                        }
                     }
                 }
-                $post->additional = array_merge($incomingAdd, $existingAdd);
+                $post->additional = array_merge($incomingAdd, $preservedAdd);
+                $encodedAdditional = $keepStoredAdditional ? null : json_encode($post->additional, $jsonOptions);
+                if ($encodedAdditional === false) {
+                    FFLogManager::log('Skipping post with unencodable metadata', ['feed_id' => $feed_id, 'post_id' => $post->id]);
+                    continue;
+                }
 
 				if (FF_ALTERNATIVE_POST_STORAGE){
 					$post_content = json_encode( [
 						'user_screenname' => $post->screenname,
 						'post_header' => $this->prepareText( mb_substr( isset( $post->header ) ? $post->header : '', 0, 200 ) ),
 						'post_text' => $this->prepareText($post->text),
-						'user_bio' => (isset($post->userMeta->bio) ? ( $post->userMeta->bio . (isset($post->userMeta->website) ? ' ' . $post->userMeta->website : '')) : ''),
-					]);
+						'user_bio' => $bio,
+					], $jsonOptions);
+                    if ($post_content === false) {
+                        FFLogManager::log('Skipping post with unencodable content', ['feed_id' => $feed_id, 'post_id' => $post->id]);
+                        continue;
+                    }
 
 					$only4insertPartOfSql = $conn->parse('?p, ?u', $only4insertPartOfSqlTemplate, [
 						'feed_id' => $feed_id,
@@ -373,7 +433,7 @@ class LACacheManager implements LACache{
 						'user_counts_followed_by' => isset($post->userMeta->counts->followed_by) ? $post->userMeta->counts->followed_by : 0,
 						'user_link' => $post->userlink,
 						'post_source' => isset($post->source) ? $post->source : '',
-						'location' => isset($post->location) ? json_encode($post->location) : '',
+						'location' => $encodedLocation,
 						'smart_order' => $post->smart_order,
 						'post_status' => $status
 					]);
@@ -381,7 +441,7 @@ class LACacheManager implements LACache{
 					$common = [
 						'post_content' => $post_content,
 						'post_timestamp' => $this->correctionTimeZone($post->system_timestamp, $timezone),
-						'post_additional' => json_encode($post->additional),
+						'post_additional' => $encodedAdditional,
 						'carousel_size' => 0
 					];
 				}
@@ -394,25 +454,26 @@ class LACacheManager implements LACache{
 						'user_nickname' => $post->nickname,
 						'user_screenname' => $post->screenname,
 						'user_pic' => $post->userpic,
-						'user_bio' => (isset($post->userMeta->bio) ? json_encode( $post->userMeta->bio . (isset($post->userMeta->website) ? ' ' . $post->userMeta->website : '')) : ''),
+						'user_bio' => $encodedBio,
 						'user_counts_media' => isset($post->userMeta->counts->media) ? $post->userMeta->counts->media : 0,
 						'user_counts_follows' => isset($post->userMeta->counts->follows) ? $post->userMeta->counts->follows : 0,
 						'user_counts_followed_by' => isset($post->userMeta->counts->followed_by) ? $post->userMeta->counts->followed_by : 0,
 						'user_link' => $post->userlink,
 						'post_source' => isset($post->source) ? $post->source : '',
-						'location' => isset($post->location) ? json_encode($post->location) : '',
+						'location' => $encodedLocation,
 						'smart_order' => $post->smart_order,
 						'post_status' => $status
 					]);
 
 					$common = [
-						'post_header' => mb_substr(@$conn->getMySQLi()->real_escape_string(trim($post->header)), 0, 200),
+						'post_header' => @$conn->getMySQLi()->real_escape_string(mb_substr(trim($post->header), 0, 200)),
 						'post_text'   => $this->prepareText($post->text),
 						'post_timestamp' => $this->correctionTimeZone($post->system_timestamp, $timezone),
-						'post_additional' => json_encode($post->additional),
+						'post_additional' => $encodedAdditional,
 						'carousel_size' => 0
 					];
 				}
+                if ($keepStoredAdditional) unset($common['post_additional']);
 				
 				if (isset($post->carousel) && sizeof($post->carousel) > 1){
 					$this->db->deleteCarousel4Post($feed_id, $post->id);
@@ -431,9 +492,16 @@ class LACacheManager implements LACache{
 				}
 				
 				$this->db->addOrUpdatePost($only4insertPartOfSql, $imagePartOfSql, $mediaPartOfSql, $common);
+                $savedPosts[$id] = $post;
 			}
+            if (empty($savedPosts)) throw new Exception('No provider posts could be encoded');
 		}
+		return $savedPosts;
 	}
+
+    private function scrubUtf8($text) {
+        return function_exists('mb_scrub') ? mb_scrub($text, 'UTF-8') : mb_convert_encoding($text, 'UTF-8', 'UTF-8');
+    }
 
     /**
      * @param $date
@@ -471,12 +539,17 @@ class LACacheManager implements LACache{
 	 * @return bool
 	 */
 	private function expiredLifeTime($feedId){
-		if (isset($_REQUEST['force']) && $_REQUEST['force']) return true;
-		// if (LAGeneralSettings::get()->isCacheDisabled()) return true;
+		if (self::$forceRefresh || self::adminRequestedForce()) return true;
+        // Normal public and background refreshes both have a one-minute minimum.
         $conn = $this->db->conn();
 		/** @noinspection SqlResolve */
-		$sql = $conn->parse('SELECT `cach`.`feed_id` FROM ?n `cach` WHERE `cach`.`feed_id`=?s AND (`cach`.last_update + `cach`.cache_lifetime * 60) < UNIX_TIMESTAMP()', $this->db->cache_table_name, $feedId);
+		$sql = $conn->parse('SELECT `cach`.`feed_id` FROM ?n `cach` WHERE `cach`.`feed_id`=?s AND (`cach`.last_update + GREATEST(`cach`.cache_lifetime, 1) * 60) < UNIX_TIMESTAMP()', $this->db->cache_table_name, $feedId);
 		return (false !== $conn->getOne($sql));
+	}
+
+	private static function adminRequestedForce() {
+		return LAUtils::request_flag('force') && FF_USE_WP
+			&& function_exists('current_user_can') && current_user_can('manage_options');
 	}
 
 	/**
@@ -517,7 +590,7 @@ class LACacheManager implements LACache{
 
 		$post->mod = $moderation;
 		$post->feed = $row['feed_id'];
-		$post->with_comments = $this->feeds[$post->feed] instanceof LAFeedWithComments;
+		$post->with_comments = isset($this->feeds[$post->feed]) && $this->feeds[$post->feed] instanceof LAFeedWithComments;
 
 		if (!empty($row['post_source'])) $post->source = $row['post_source'];
 		if ($row['image_url'] != null){
@@ -590,8 +663,8 @@ class LACacheManager implements LACache{
 		return [$posts, $existed_posts];
 	}
 	
-	private function encodeHash($hash){
-		if (!empty($hash)){
+	protected function encodeHash($hash){
+		if (!empty($hash) && $this->stream){
 			$postfix  = hash('md5', serialize($this->stream->original()));
 			$postfix .= hash('md5', serialize(LAGeneralSettings::get()->original()));
 			$postfix .= hash('md5', serialize(LAGeneralSettings::get()->originalAuth()));
@@ -697,11 +770,11 @@ class LACacheManager implements LACache{
 	private function triggerTikTokTokenRefresh() {
 		try {
 			if (method_exists($this->db, 'refreshTikTokAccessToken')) {
-				error_log('[Flow-Flow] TikTok auth error detected, triggering token refresh');
+				\la\core\LAUtils::errorLog('[Flow-Flow] TikTok auth error detected, triggering token refresh');
 				$this->db->refreshTikTokAccessToken(true); // force refresh
 			}
 		} catch (\Exception $e) {
-			error_log('[Flow-Flow] Failed to trigger TikTok token refresh: ' . $e->getMessage());
+			\la\core\LAUtils::errorLog('[Flow-Flow] Failed to trigger TikTok token refresh: ' . $e->getMessage());
 		}
 	}
 	
@@ -712,14 +785,14 @@ class LACacheManager implements LACache{
 		try {
 			// Facebook token refresh is handled by LAFacebookCacheManager
 			if (isset($this->context['facebook_cache'])) {
-				error_log('[Flow-Flow] Facebook auth error detected, triggering token refresh');
+				\la\core\LAUtils::errorLog('[Flow-Flow] Facebook auth error detected, triggering token refresh');
 				$facebookCache = $this->context['facebook_cache'];
 				if (method_exists($facebookCache, 'getAccessToken')) {
 					$facebookCache->getAccessToken(); // This triggers refresh if needed
 				}
 			}
 		} catch (\Exception $e) {
-			error_log('[Flow-Flow] Failed to trigger Facebook token refresh: ' . $e->getMessage());
+			\la\core\LAUtils::errorLog('[Flow-Flow] Failed to trigger Facebook token refresh: ' . $e->getMessage());
 		}
 	}
 	
@@ -731,10 +804,15 @@ class LACacheManager implements LACache{
 		try {
 			$thirtyDaysAgo = time() - (30 * DAY_IN_SECONDS);
 			$sql = 'UPDATE ?n SET `errors` = NULL, `error_timestamp` = 0 WHERE `error_timestamp` > 0 AND `error_timestamp` < ?i';
-			$this->db->conn()->query($sql, $this->db->cache_table_name, $thirtyDaysAgo);
+            $conn = $this->db->conn();
+			if ($conn->query($sql, $this->db->cache_table_name, $thirtyDaysAgo) === false) {
+                return false;
+            }
+            return $conn->affectedRows() > 0;
 		} catch (\Exception $e) {
-			error_log('[Flow-Flow] Failed to cleanup old errors: ' . $e->getMessage());
+			\la\core\LAUtils::errorLog('[Flow-Flow] Failed to cleanup old errors: ' . $e->getMessage());
 		}
+        return false;
 	}
 }
 // phpcs:enable

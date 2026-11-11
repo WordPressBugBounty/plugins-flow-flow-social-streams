@@ -6,6 +6,7 @@ use flow\social\cache\LAFacebookCacheManager;
 use flow\social\FFFeedUtils;
 use la\core\db\LADBManager;
 use la\core\LABase;
+use la\core\LAUtils;
 use la\core\settings\LASettingsUtils;
 
 if (!defined('WPINC'))
@@ -77,7 +78,7 @@ class FFDBManager extends LADBManager
                 wp_send_json_error(['message' => 'Unsupported platform'], 400);
             }
         } catch (\Exception $e) {
-            error_log('[Flow-Flow] Error getting token status: ' . $e->getMessage());
+            \la\core\LAUtils::errorLog('[Flow-Flow] Error getting token status: ' . $e->getMessage());
             wp_send_json_error(['message' => 'Internal server error'], 500);
         }
     }
@@ -143,7 +144,7 @@ class FFDBManager extends LADBManager
                         $this->setOption('options', $options, true);
                     }
                 } catch (\Exception $e) {
-                    error_log('[Flow-Flow] Error fetching Facebook user info: ' . $e->getMessage());
+                    \la\core\LAUtils::errorLog('[Flow-Flow] Error fetching Facebook user info: ' . $e->getMessage());
                 }
 
                 // Clean cache to ensure new settings take effect
@@ -155,11 +156,11 @@ class FFDBManager extends LADBManager
 
                 // Save TikTok access token and related data
                 $token_updated = false;
-                if (isset($_REQUEST['tiktok_access_token'])) {
+                if (isset($_REQUEST['tiktok_access_token']) && trim($_REQUEST['tiktok_access_token']) !== '') {
                     $options['tiktok_access_token'] = $this->sanitizeField($_REQUEST['tiktok_access_token']);
                     $token_updated = true;
                 }
-                if (isset($_REQUEST['tiktok_refresh_token'])) {
+                if (isset($_REQUEST['tiktok_refresh_token']) && trim($_REQUEST['tiktok_refresh_token']) !== '') {
                     $options['tiktok_refresh_token'] = $this->sanitizeField($_REQUEST['tiktok_refresh_token']);
                 }
                 if (isset($_REQUEST['tiktok_username'])) {
@@ -167,18 +168,20 @@ class FFDBManager extends LADBManager
                 }
                 if (isset($_REQUEST['expires'])) {
                     $expires_in = (int) $_REQUEST['expires'];
-                    $expires_timestamp = time() + $expires_in;
+                    if ($expires_in > 0) {
+                        $expires_timestamp = time() + $expires_in;
 
-                    // Log the expiration values for debugging
-                    error_log(sprintf(
-                        '[Flow-Flow] Token refresh - expires_in: %d, current time: %s, calculated expiration: %s',
-                        $expires_in,
-                        date('Y-m-d H:i:s'),
-                        date('Y-m-d H:i:s', $expires_timestamp)
-                    ));
+                        // Log the expiration values for debugging
+                        \la\core\LAUtils::errorLog(sprintf(
+                            '[Flow-Flow] Token refresh - expires_in: %d, current time: %s, calculated expiration: %s',
+                            $expires_in,
+                            date('Y-m-d H:i:s'),
+                            date('Y-m-d H:i:s', $expires_timestamp)
+                        ));
 
-                    // Store the exact expiration timestamp
-                    $options['tiktok_expires_in'] = $expires_timestamp;
+                        // Store the exact expiration timestamp
+                        $options['tiktok_expires_in'] = $expires_timestamp;
+                    }
                 }
 
                 // Save the options
@@ -201,7 +204,7 @@ class FFDBManager extends LADBManager
                             }
                         }
                     } catch (\Exception $e) {
-                        error_log('[Flow-Flow] Error fetching TikTok user info: ' . $e->getMessage());
+                        \la\core\LAUtils::errorLog('[Flow-Flow] Error fetching TikTok user info: ' . $e->getMessage());
                     }
                 }
 
@@ -276,7 +279,7 @@ class FFDBManager extends LADBManager
                             }
                         }
                     } catch (\Exception $e) {
-                        error_log('[Flow-Flow] Error fetching LinkedIn user info: ' . $e->getMessage());
+                        \la\core\LAUtils::errorLog('[Flow-Flow] Error fetching LinkedIn user info: ' . $e->getMessage());
                     }
                 }
 
@@ -339,7 +342,7 @@ class FFDBManager extends LADBManager
 
             $info = $this->requestFacebookUserInfo($token);
             if (!is_array($info)) {
-                error_log('[Flow-Flow Facebook] Failed to parse user info');
+                \la\core\LAUtils::errorLog('[Flow-Flow Facebook] Failed to parse user info');
                 wp_send_json_error(['error' => 'Failed to get Facebook user info'], 500);
             }
 
@@ -362,7 +365,7 @@ class FFDBManager extends LADBManager
                 'debug' => $debug
             ]);
         } catch (\Exception $e) {
-            error_log('[Flow-Flow Facebook] fetch_facebook_user_info error: ' . $e->getMessage());
+            \la\core\LAUtils::errorLog('[Flow-Flow Facebook] fetch_facebook_user_info error: ' . $e->getMessage());
             wp_send_json_error(['error' => $e->getMessage()], 500);
         }
     }
@@ -393,7 +396,7 @@ class FFDBManager extends LADBManager
         }
         if ($httpCode !== 200) {
             $snippet = is_string($response) ? substr($response, 0, 256) : '';
-            error_log('[Flow-Flow Facebook] API error HTTP ' . $httpCode . ' ' . $snippet);
+            \la\core\LAUtils::errorLog('[Flow-Flow Facebook] API error HTTP ' . $httpCode . ' ' . $snippet);
             throw new \Exception('Facebook API error HTTP ' . $httpCode . ' ' . $snippet);
         }
         $data = json_decode($response, true);
@@ -654,26 +657,26 @@ class FFDBManager extends LADBManager
      */
     public function refreshTikTokAccessToken($force = false)
     {
-        error_log('[Flow-Flow] Starting TikTok token refresh (force: ' . ($force ? 'true' : 'false') . ')');
+        \la\core\LAUtils::errorLog('[Flow-Flow] Starting TikTok token refresh (force: ' . ($force ? 'true' : 'false') . ')');
 
         $options = $this->getOption('options', true);
         if (!is_array($options)) {
             $options = [];
-            error_log('[Flow-Flow] No options found, initializing empty array');
+            \la\core\LAUtils::errorLog('[Flow-Flow] No options found, initializing empty array');
         }
 
         $refresh = isset($options['tiktok_refresh_token']) ? trim($options['tiktok_refresh_token']) : '';
         $expires = isset($options['tiktok_expires_in']) ? (int) $options['tiktok_expires_in'] : 0;
         $now = time();
 
-        error_log(sprintf(
+        \la\core\LAUtils::errorLog(sprintf(
             '[Flow-Flow] Current token - Expires in: %s, Now: %s',
             $expires > 0 ? ($expires - $now) . ' seconds' : 'never',
             date('Y-m-d H:i:s', $now)
         ));
 
         if ($refresh === '') {
-            error_log('[Flow-Flow] No refresh token available, cannot refresh');
+            \la\core\LAUtils::errorLog('[Flow-Flow] No refresh token available, cannot refresh');
             return false;
         }
 
@@ -682,21 +685,21 @@ class FFDBManager extends LADBManager
             $timeLeft = $expires - $now;
 
             if ($timeLeft > $threshold) {
-                error_log(sprintf(
+                \la\core\LAUtils::errorLog(sprintf(
                     '[Flow-Flow] Token still valid for %d days, skipping refresh',
                     ceil($timeLeft / DAY_IN_SECONDS)
                 ));
                 return false; // not yet time
             }
 
-            error_log(sprintf(
+            \la\core\LAUtils::errorLog(sprintf(
                 '[Flow-Flow] Token expires in %d hours, refreshing...',
                 ceil($timeLeft / HOUR_IN_SECONDS)
             ));
         } else if ($force) {
-            error_log('[Flow-Flow] Forcing token refresh');
+            \la\core\LAUtils::errorLog('[Flow-Flow] Forcing token refresh');
         } else {
-            error_log('[Flow-Flow] No expiration time set, refreshing token to be safe');
+            \la\core\LAUtils::errorLog('[Flow-Flow] No expiration time set, refreshing token to be safe');
         }
 
         // Use the same third-party authorization server as AUTH tab to refresh
@@ -710,7 +713,7 @@ class FFDBManager extends LADBManager
                 $accessToken = isset($options['tiktok_access_token']) ? trim($options['tiktok_access_token']) : '';
 
                 if ($accessToken !== '') {
-                    error_log('[Flow-Flow] Fetching updated user info after token refresh');
+                    \la\core\LAUtils::errorLog('[Flow-Flow] Fetching updated user info after token refresh');
 
                     // Fetch and save user info with the new token
                     $user_info = $this->fetchAndSaveTikTokUserInfo($accessToken);
@@ -723,22 +726,33 @@ class FFDBManager extends LADBManager
                         $options['tiktok_userpic'] = $user_info['avatar_url'] ?? '';
                         $this->setOption('options', $options, true);
 
-                        error_log('[Flow-Flow] Successfully updated user info after token refresh');
+                        \la\core\LAUtils::errorLog('[Flow-Flow] Successfully updated user info after token refresh');
 
                         // Invalidate cache lifetime so feeds re-fetch with the new token.
                         // Do NOT use cleanByFeedType() — it deletes all cached posts.
                         $this->resetCacheLifetimeByFeedType('tiktok');
+
+                        // Refresh feeds afterwards so new posts are fetched immediately with the new token.
+                        try {
+                            $ff = LABase::get_instance($this->context);
+                            if (method_exists($ff, 'refreshCache')) {
+                                \la\core\LAUtils::errorLog('[Flow-Flow] Refreshing feeds after TikTok token refresh');
+                                $ff->refreshCache(null, true);
+                            }
+                        } catch (\Throwable $e) {
+                            \la\core\LAUtils::errorLog('[Flow-Flow] Error refreshing feeds after TikTok token refresh: ' . $e->getMessage());
+                        }
                     }
                 }
             } catch (\Exception $e) {
-                error_log('[Flow-Flow] Error updating user info after token refresh: ' . $e->getMessage());
+                \la\core\LAUtils::errorLog('[Flow-Flow] Error updating user info after token refresh: ' . $e->getMessage());
                 // Don't fail the token refresh if user info update fails
             }
         } else {
-            error_log('[Flow-Flow] Token refresh failed, skipping user info update');
+            \la\core\LAUtils::errorLog('[Flow-Flow] Token refresh failed, skipping user info update');
         }
 
-        error_log('[Flow-Flow] Token refresh ' . ($result ? 'succeeded' : 'failed'));
+        \la\core\LAUtils::errorLog('[Flow-Flow] Token refresh ' . ($result ? 'succeeded' : 'failed'));
         return $result;
     }
 
@@ -750,10 +764,10 @@ class FFDBManager extends LADBManager
      */
     public function triggerTikTokRefreshViaAuthServer($refreshToken)
     {
-        error_log('[Flow-Flow] Triggering TikTok token refresh via auth server');
+        \la\core\LAUtils::errorLog('[Flow-Flow] Triggering TikTok token refresh via auth server');
 
         if (empty($refreshToken)) {
-            error_log('[Flow-Flow] Error: Empty refresh token provided');
+            \la\core\LAUtils::errorLog('[Flow-Flow] Error: Empty refresh token provided');
             return false;
         }
 
@@ -768,7 +782,7 @@ class FFDBManager extends LADBManager
 
         $url = 'https://flow.looks-awesome.com/service/auth/callback/tiktok-auth.php?' . http_build_query($params);
 
-        error_log(sprintf(
+        \la\core\LAUtils::errorLog(sprintf(
             '[Flow-Flow] Sending refresh request to: %s (token length: %d chars)',
             'https://flow.looks-awesome.com/service/auth/callback/tiktok-auth.php?[params]',
             strlen($refreshToken)
@@ -796,7 +810,7 @@ class FFDBManager extends LADBManager
         $errno = curl_errno($ch);
 
         if ($errno || $error) {
-            error_log(sprintf(
+            \la\core\LAUtils::errorLog(sprintf(
                 '[Flow-Flow] cURL error during token refresh (code %d): %s',
                 $errno,
                 $error
@@ -808,7 +822,7 @@ class FFDBManager extends LADBManager
         $contentType = curl_getinfo($ch, CURLINFO_CONTENT_TYPE);
         curl_close($ch);
 
-        error_log(sprintf(
+        \la\core\LAUtils::errorLog(sprintf(
             '[Flow-Flow] Token refresh response - Status: %d, Content-Type: %s',
             $httpCode,
             $contentType
@@ -819,24 +833,24 @@ class FFDBManager extends LADBManager
             if (strpos($contentType, 'application/json') !== false) {
                 $json = json_decode($response, true);
                 if (json_last_error() === JSON_ERROR_NONE && isset($json['error'])) {
-                    error_log(sprintf(
+                    \la\core\LAUtils::errorLog(sprintf(
                         '[Flow-Flow] Token refresh API error: %s',
                         $json['error_description'] ?? $json['error']
                     ));
                     return false;
                 }
             }
-            error_log('[Flow-Flow] Token refresh request successful');
+            \la\core\LAUtils::errorLog('[Flow-Flow] Token refresh request successful');
             return true;
         }
         // Accept redirects as success (3xx)
         elseif ($httpCode >= 300 && $httpCode < 400) {
-            error_log('[Flow-Flow] Token refresh request redirected, assuming success');
+            \la\core\LAUtils::errorLog('[Flow-Flow] Token refresh request redirected, assuming success');
             return true;
         }
         // Handle error responses
         else {
-            error_log(sprintf(
+            \la\core\LAUtils::errorLog(sprintf(
                 '[Flow-Flow] Token refresh failed with status %d: %s',
                 $httpCode,
                 substr($response, 0, 500) // Log first 500 chars of response
@@ -1081,7 +1095,7 @@ class FFDBManager extends LADBManager
             $mm = new FFDBMigrationManager($this->context);
             $mm->migrate(true);
         } catch (\Exception $e) {
-            error_log('[Flow-Flow] Error during repairDB: ' . $e->getMessage());
+            \la\core\LAUtils::errorLog('[Flow-Flow] Error during repairDB: ' . $e->getMessage());
         }
     }
 
@@ -1102,7 +1116,7 @@ class FFDBManager extends LADBManager
 
         // Security: Verify nonce to prevent CSRF attacks
         if (!isset($_REQUEST['_ff_nonce']) || !wp_verify_nonce($_REQUEST['_ff_nonce'], 'ff_refresh_feeds')) {
-            error_log("Flow-Flow refresh_feeds: Invalid or missing nonce");
+            \la\core\LAUtils::errorLog("Flow-Flow refresh_feeds: Invalid or missing nonce");
             wp_send_json_error([
                 'message' => 'Security verification failed',
                 'code' => 'invalid_nonce'
@@ -1111,7 +1125,7 @@ class FFDBManager extends LADBManager
         }
 
         // Security: Rate limiting per IP address to prevent abuse
-        $client_ip = $this->getClientIP();
+        $client_ip = LAUtils::client_ip();
         $rate_limit_key = 'ff_refresh_feeds_' . md5($client_ip);
         $rate_limit = get_transient($rate_limit_key);
 
@@ -1119,7 +1133,7 @@ class FFDBManager extends LADBManager
             $attempts = (int) $rate_limit;
             // Allow max 10 requests per minute per IP
             if ($attempts >= 10) {
-                error_log("Flow-Flow refresh_feeds: Rate limit exceeded for IP: {$client_ip}");
+                \la\core\LAUtils::errorLog("Flow-Flow refresh_feeds: Rate limit exceeded for IP: {$client_ip}");
                 wp_send_json_error([
                     'message' => 'Too many requests. Please wait before trying again.',
                     'code' => 'rate_limit_exceeded',
@@ -1146,137 +1160,76 @@ class FFDBManager extends LADBManager
             return;
         }
 
-        error_log("Flow-Flow refresh_feeds: Starting refresh for feed IDs: " . json_encode($ids));
+        \la\core\LAUtils::errorLog("Flow-Flow refresh_feeds: Starting refresh for feed IDs: " . json_encode($ids));
 
         $refreshed = 0;
         $feedsPayload = [];
 
-        // Initialize data and Flow-Flow core
         $this->dataInit(true, false);
-        $ff = LABase::get_instance($this->context);
         $sources = $this->sources();
-        $conn = $this->conn();
 
         foreach ($ids as $id) {
-            $feed_start = microtime(true);
+            $streamId = null;
+            $lastUpdate = 0;
+            $refreshedFeed = false;
+            $message = 'Refresh did not complete';
             try {
-                $id = trim($id);
-                if (empty($id)) {
-                    error_log("Flow-Flow refresh_feeds: Skipping empty feed ID");
-                    continue;
-                }
-
-                error_log("Flow-Flow refresh_feeds: Processing feed ID: {$id}");
-
-                // Get the feed from sources
                 if (!isset($sources[$id])) {
-                    error_log("Flow-Flow refresh_feeds: Feed not found: {$id}");
-                    $feedsPayload[] = [
-                        'feed_id' => $id,
-                        'status' => 'error',
-                        'message' => 'Feed not found'
-                    ];
+                    $feedsPayload[] = ['feed_id' => $id, 'status' => 'error', 'message' => 'Feed not found'];
                     continue;
                 }
-
-                $feed = (object) $sources[$id];
-                error_log("Flow-Flow refresh_feeds: Feed {$id} found, type: " . ($feed->type ?? 'unknown'));
-
-                // Get the stream ID for this feed from the streams_sources table
+                // A preceding feed refresh can close or replace its connection.
+                $conn = $this->conn();
                 $streamId = $conn->getOne(
                     'SELECT `stream_id` FROM ?n WHERE `feed_id` = ?s LIMIT 1',
-                    $this->streams_sources_table_name,
-                    $id
+                    $this->streams_sources_table_name, $id
                 );
-
-                if (!$streamId) {
-                    error_log("Flow-Flow refresh_feeds: No stream found for feed {$id}");
-                    throw new \Exception('No stream associated with this feed');
+                if (!$streamId) throw new \Exception('No stream associated with this feed');
+                $before = $conn->getRow('SELECT `status`, `last_update` FROM ?n WHERE `feed_id` = ?s', $this->cache_table_name, $id);
+                $lastUpdate = $before ? (int)$before['last_update'] : 0;
+                $boosted = LASettingsUtils::YepNope2ClassicStyleSafe($sources[$id], 'boosted', false);
+                // Visitors trigger this from broken media, and per-IP limits can be
+                // evaded, so each feed is force-refreshed at most once per cooldown.
+                $cooldownKey = 'ff_refresh_feed_' . md5((string)$id);
+                if (!current_user_can('manage_options') && get_transient($cooldownKey)) {
+                    throw new \Exception('Feed was refreshed recently');
                 }
-
-                error_log("Flow-Flow refresh_feeds: Feed {$id} belongs to stream: {$streamId}");
-
-                // Rebuild cache using same logic as admin UI "Rebuild cache" button
-                error_log("Flow-Flow refresh_feeds: Cleaning old cache for feed {$id}");
-                $this->cleanFeed($id);
-
-                error_log("Flow-Flow refresh_feeds: Calling refreshCache4Source for feed {$id}");
-                $boosted = LASettingsUtils::YepNope2ClassicStyle($feed->boosted ?? 'nope', false);
-
-                // Token fallback: Try to refresh, but don't fail if token is invalid
-                try {
-                    $this->refreshCache4Source($id, true, $boosted);
-                    $refreshed++;
-                    error_log("Flow-Flow refresh_feeds: Cache rebuild triggered for feed {$id}");
-                } catch (\Exception $tokenException) {
-                    // Log token error but continue - use cached data if available
-                    error_log("Flow-Flow refresh_feeds: Token error for feed {$id}, using cached data: " . $tokenException->getMessage());
-
-                    // Mark feed status but don't fail completely
-                    $feedsPayload[] = [
-                        'feed_id' => $id,
-                        'status' => 'cached',
-                        'message' => 'Using cached content (token refresh failed)',
-                        'posts' => $this->getPostsForFeed($id),
-                        'post_count' => count($this->getPostsForFeed($id)),
-                        'last_update' => time()
-                    ];
-                    continue; // Skip to next feed
-                }
-
-                // Query posts from database after refresh
-                $posts = $this->getPostsForFeed($id);
-                $post_count = count($posts);
-
-                error_log("Flow-Flow refresh_feeds: Retrieved {$post_count} posts from database for feed {$id}");
-
-                $feedsPayload[] = [
-                    'feed_id' => $id,
-                    'status' => 'success',
-                    'stream_id' => $streamId,
-                    'posts' => $posts,
-                    'post_count' => $post_count,
-                    'last_update' => time()
-                ];
-
-                $feed_time = microtime(true) - $feed_start;
-                error_log("Flow-Flow refresh_feeds: Feed {$id} refreshed successfully with {$post_count} posts in {$feed_time}s");
-
-            } catch (\Throwable $e) {
-                $errorMessage = sprintf(
-                    "Flow-Flow Error refreshing feed %s: %s\nStack Trace:\n%s",
-                    $id,
-                    $e->getMessage(),
-                    $e->getTraceAsString()
-                );
-                error_log($errorMessage);
-
-                // Fallback: Try to return cached posts even on error
-                $cachedPosts = $this->getPostsForFeed($id);
-                if (!empty($cachedPosts)) {
-                    error_log("Flow-Flow refresh_feeds: Using cached data for feed {$id} after error");
-                    $feedsPayload[] = [
-                        'feed_id' => $id,
-                        'status' => 'cached',
-                        'message' => 'Using cached content (refresh failed)',
-                        'posts' => $cachedPosts,
-                        'post_count' => count($cachedPosts),
-                        'last_update' => time()
-                    ];
-                } else {
-                    // Add error to response only if no cached data available
-                    $feedsPayload[] = [
-                        'feed_id' => $id,
-                        'status' => 'error',
-                        'message' => $e->getMessage()
-                    ];
-                }
+                set_transient($cooldownKey, 1, (int)apply_filters('flow_flow_public_refresh_cooldown', 300));
+                $triggered = $this->refreshCache4Source($id, true, $boosted);
+                $after = $this->conn()->getRow('SELECT `status`, `last_update` FROM ?n WHERE `feed_id` = ?s', $this->cache_table_name, $id);
+                $refreshedFeed = $triggered !== false && $after && (int)$after['status'] === 1;
+                if ($refreshedFeed) $lastUpdate = (int)$after['last_update'];
+            } catch (\Throwable $error) {
+                $message = $error->getMessage();
+                \la\core\LAUtils::errorLog('Flow-Flow refresh_feeds: ' . $id . ': ' . $message);
             }
+
+            // Keep the last successful posts available even when the provider or
+            // storage fails. This public response uses the same approval policy.
+            try {
+                $posts = $this->getPostsForFeed($id);
+            } catch (\Throwable $error) {
+                $posts = [];
+                $refreshedFeed = false;
+                $message = $error->getMessage();
+            }
+            $status = $refreshedFeed ? 'success' : (empty($posts) ? 'error' : 'cached');
+            if ($refreshedFeed) $refreshed++;
+            $payload = [
+                'feed_id' => $id,
+                'status' => $status,
+                'stream_id' => $streamId,
+                'posts' => $posts,
+                'post_count' => count($posts),
+                'last_update' => $lastUpdate
+            ];
+            if (!$refreshedFeed) $payload['message'] = $status === 'cached' ? 'Using cached content (refresh failed)' : $message;
+            $feedsPayload[] = $payload;
         }
 
         $total_time = microtime(true) - $start_time;
         $total_requested = count($ids);
-        error_log("Flow-Flow refresh_feeds: Completed. Refreshed {$refreshed}/{$total_requested} feeds in {$total_time}s");
+        \la\core\LAUtils::errorLog("Flow-Flow refresh_feeds: Completed. Refreshed {$refreshed}/{$total_requested} feeds in {$total_time}s");
 
         $response = [
             'success' => true,
@@ -1319,7 +1272,7 @@ class FFDBManager extends LADBManager
                     `post_header`, `post_additional`, `post_permalink`,
                     `image_url`, `image_width`, `image_height`
              FROM ?n 
-             WHERE `feed_id` = ?s 
+             WHERE `feed_id` = ?s AND `post_status` = \'approved\' 
              ORDER BY `post_timestamp` DESC 
              LIMIT 50',
             $this->posts_table_name,
@@ -1400,34 +1353,6 @@ class FFDBManager extends LADBManager
         return $result;
     }
 
-    /**
-     * Get client IP address for rate limiting
-     * Handles various proxy configurations
-     * 
-     * @return string
-     */
-    private function getClientIP()
-    {
-        $ip_keys = ['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP', 'REMOTE_ADDR'];
-
-        foreach ($ip_keys as $key) {
-            if (!empty($_SERVER[$key])) {
-                $ip = $_SERVER[$key];
-                // For X-Forwarded-For, get the first IP
-                if (strpos($ip, ',') !== false) {
-                    $ips = explode(',', $ip);
-                    $ip = trim($ips[0]);
-                }
-                // Validate IP
-                if (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-                    return $ip;
-                }
-            }
-        }
-
-        // Fallback to REMOTE_ADDR (even if private)
-        return isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
-    }
 
     /**
      * AJAX handler to generate custom CSS via WP AI Connector.

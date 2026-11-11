@@ -63,7 +63,7 @@ class LASnapshotManager {
         $result = [];
 
         if (FF_USE_WP) {
-            if (!current_user_can('manage_options') && !check_ajax_referer( 'flow_flow_nonce', 'security', false ) ) {
+            if (!current_user_can('manage_options') || !check_ajax_referer( 'flow_flow_nonce', 'security', false ) ) {
                 die( json_encode( [ 'error' => 'not_allowed' ] ) );
             }
         }
@@ -87,12 +87,17 @@ class LASnapshotManager {
                         $result = $this->deleteBackup($dbm);
                         break;
                 }
-                $conn->commit();
+                if ($conn->commit() === false) {
+                    throw new Exception('Could not commit backup changes');
+                }
+                if ($_REQUEST['action'] === 'restore_backup' && !empty($result['restore'])) {
+                    \la\core\cache\LATransientCache::invalidateAll();
+                }
             }
             catch ( Exception $e){
                 $conn->rollbackAndClose();
-                error_log($e->getMessage());
-                error_log($e->getTraceAsString());
+                \la\core\LAUtils::errorLog($e->getMessage());
+                \la\core\LAUtils::errorLog($e->getTraceAsString());
 
                 switch ($_REQUEST['action']){
                     case 'create_backup':
@@ -149,12 +154,14 @@ class LASnapshotManager {
             $all = unserialize($all);
             unset($dump);
 
+            // Every write joins the transaction opened by processAjaxRequest, so a
+            // failure part way through rolls the whole restore back.
             foreach ( $dbm->sources() as $id => $source ) {
-                $dbm->deleteFeed($id);
+                $dbm->deleteFeed($id, false);
             }
 
             foreach ( $all['sources'] as $source ) {
-                $dbm->modifySource($source);
+                $dbm->modifySource($source, true, false, false);
             }
             unset($all['sources']);
 
@@ -166,7 +173,7 @@ class LASnapshotManager {
 
             foreach ( $all['streams'] as $stream ) {
                 $obj = (object)$stream;
-                LADB::setStream($conn, $dbm->streams_table_name, $dbm->streams_sources_table_name, $obj->id, $obj);
+                LADB::setStream($conn, $dbm->streams_table_name, $dbm->streams_sources_table_name, $obj->id, $obj, false);
                 $dbm->generateCss($obj);
             }
             unset($all['streams']);
@@ -175,7 +182,7 @@ class LASnapshotManager {
                 $key = strpos($key, 'flow_flow_') === 0 ? str_replace('flow_flow_', '', $key) : $key;
                 $dbm->setOption($key, $value);
             }
-            $dbm->clean();
+            $dbm->clean(null, false);
             return [ 'restore' => true ];
         }
         else {

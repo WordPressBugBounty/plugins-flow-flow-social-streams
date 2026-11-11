@@ -85,9 +85,9 @@ class LAImageSizeCacheManager extends FFImageSizeCacheBase
                 }
                 return $data;
             } catch (Exception $e) {
-                error_log($url);
-                error_log($e->getMessage());
-                error_log($e->getTraceAsString());
+                \la\core\LAUtils::errorLog($url);
+                \la\core\LAUtils::errorLog($e->getMessage());
+                \la\core\LAUtils::errorLog($e->getTraceAsString());
                 return ['time' => time(), 'width' => -1, 'height' => -1, 'error' => $e->getMessage()];
             }
         }
@@ -127,7 +127,7 @@ class LAImageSizeCacheManager extends FFImageSizeCacheBase
         $im = imagecreatefromstring($raw);
         // Check if image creation failed (e.g., if URL is a video file)
         if ($im === false) {
-            error_log('[LAImageSizeCacheManager] Failed to create image from URL: ' . $url);
+            \la\core\LAUtils::errorLog('[LAImageSizeCacheManager] Failed to create image from URL: ' . $url);
             return [-1, -1];
         }
         $width = imagesx($im);

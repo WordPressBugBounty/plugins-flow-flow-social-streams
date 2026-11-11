@@ -91,27 +91,28 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
 
         if (defined('FF_LOG_FILE_DEST')) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            @error_log('FFInstagramOfficialAPI request' . ($isHashtagFeed ? ' [hashtag]' : '') . ': ' . $this->url . PHP_EOL, 3, FF_LOG_FILE_DEST);
+            @error_log(\la\core\LAUtils::redactSecrets('FFInstagramOfficialAPI request' . ($isHashtagFeed ? ' [hashtag]' : '') . ': ' . $this->url . PHP_EOL), 3, FF_LOG_FILE_DEST);
         }
         $data = FFFeedUtils::getFeedDataWithThrowException($this->url);
         if (isset($data['response']) && is_string($data['response'])) {
             $response = $data['response'];
             if (defined('FF_LOG_FILE_DEST')) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                @error_log('FFInstagramOfficialAPI response' . ($isHashtagFeed ? ' [hashtag]' : '') . ': ' . $response . PHP_EOL, 3, FF_LOG_FILE_DEST);
+                @error_log(\la\core\LAUtils::redactSecrets('FFInstagramOfficialAPI response' . ($isHashtagFeed ? ' [hashtag]' : '') . ': ' . $response . PHP_EOL), 3, FF_LOG_FILE_DEST);
             }
-            //fix malformed
-            //http://stackoverflow.com/questions/19981442/decoding-instagram-reply-php
-            //In case of a problem, comment out this line
-            $response = html_entity_decode($response);
+            // Decode the original JSON. HTML entities belong to caption
+            // text and must not change serialized JSON syntax or field values.
             $page = json_decode($response);
+            if (json_last_error() !== JSON_ERROR_NONE || !is_object($page)) {
+                throw new LASocialException('Instagram returned invalid JSON data.', ['url' => $this->url]);
+            }
 
             // Check for API error response
             if (isset($page->error)) {
                 $errorMsg = isset($page->error->message) ? $page->error->message : 'Unknown Instagram API error';
                 if (defined('FF_LOG_FILE_DEST')) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    @error_log('FFInstagramOfficialAPI API error: ' . $errorMsg . PHP_EOL, 3, FF_LOG_FILE_DEST);
+                    @error_log(\la\core\LAUtils::redactSecrets('FFInstagramOfficialAPI API error: ' . $errorMsg . PHP_EOL), 3, FF_LOG_FILE_DEST);
                 }
                 // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                 throw new LASocialException(function_exists('esc_html') ? esc_html($errorMsg) : htmlspecialchars($errorMsg, ENT_QUOTES, 'UTF-8'));
@@ -119,9 +120,16 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
 
             $userMeta = null;
             $with_user_meta = false;
-            if (isset($page->business_discovery)) {
-                $userMeta = $this->fillUser($page->business_discovery);
-                $page = $page->business_discovery->media;
+            // Timeline queries return either the connected account itself or
+            // business_discovery; both wrap the media edge and its pagination.
+            if (property_exists($page, 'business_discovery') || property_exists($page, 'media')) {
+                $profile = property_exists($page, 'business_discovery') ? $page->business_discovery : $page;
+                if (!is_object($profile) || !isset($profile->media) || !is_object($profile->media)
+                    || !isset($profile->media->data) || !is_array($profile->media->data)) {
+                    throw new LASocialException('Instagram returned invalid account media data.', ['url' => $this->url]);
+                }
+                $userMeta = $this->fillUser($profile);
+                $page = $profile->media;
                 $with_user_meta = true;
             }
 
@@ -137,12 +145,17 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
             if (!isset($page->data) || !is_array($page->data)) {
                 if (defined('FF_LOG_FILE_DEST')) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                    @error_log('FFInstagramOfficialAPI: No data array in response.' . ($isHashtagFeed ? ' Hashtag recent_media only returns posts from last 24h.' : '') . PHP_EOL, 3, FF_LOG_FILE_DEST);
+                    @error_log(\la\core\LAUtils::redactSecrets('FFInstagramOfficialAPI: No data array in response.' . ($isHashtagFeed ? ' Hashtag recent_media only returns posts from last 24h.' : '') . PHP_EOL), 3, FF_LOG_FILE_DEST);
                 }
-                return $result;
+                throw new LASocialException('Instagram response is missing a media data array.', ['url' => $this->url]);
             }
 
             foreach ($page->data as $item) {
+                // Meta omits permalink for some media (e.g. reels with licensed audio).
+                if (!is_object($item) || !isset($item->id, $item->media_type)) {
+                    \la\core\LAUtils::errorLog('Flow-Flow Instagram: skipping malformed media item');
+                    continue;
+                }
                 // Filter out reels from hashtag feeds
                 if ($isHashtagFeed) {
                     if (isset($item->permalink) && strpos($item->permalink, '/reel/') !== false) {
@@ -161,7 +174,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
 
             if ($isHashtagFeed && empty($result) && defined('FF_LOG_FILE_DEST')) {
                 // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-                @error_log('FFInstagramOfficialAPI: Hashtag feed returned 0 posts. Note: recent_media only returns posts from last 24 hours. Consider using "top" hashtag type instead.' . PHP_EOL, 3, FF_LOG_FILE_DEST);
+                @error_log(\la\core\LAUtils::redactSecrets('FFInstagramOfficialAPI: Hashtag feed returned 0 posts. Note: recent_media only returns posts from last 24 hours. Consider using "top" hashtag type instead.' . PHP_EOL), 3, FF_LOG_FILE_DEST);
             }
         } else {
             // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
@@ -207,7 +220,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
         $tc->system_timestamp = isset($post->timestamp) ? strtotime($post->timestamp) : time();
         $tc->text = isset($post->caption) ? FFFeedUtils::hashtagLinks($post->caption) : '';
         $tc->userlink = 'http://instagram.com/' . ($tc->nickname ?: 'instagram');
-        $tc->permalink = $post->permalink;
+        $tc->permalink = !empty($post->permalink) ? $post->permalink : $tc->userlink;
         $tc->location = '';
         $tc->additional = ['likes' => (string) (isset($post->like_count) ? $post->like_count : 0), 'comments' => (string) (isset($post->comments_count) ? $post->comments_count : 0)];
 
@@ -226,7 +239,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
                 $height = $s['height'];
             } else {
                 // Video without thumbnail - fetch it via oEmbed API
-                $thumbnailUrl = $this->getVideoThumbnail($post->permalink);
+                $thumbnailUrl = $this->getVideoThumbnail(isset($post->permalink) ? $post->permalink : '');
                 if ($thumbnailUrl) {
                     $image_thumbnail_url = $thumbnailUrl;
                     $s = $this->imageCache->size($image_thumbnail_url);
@@ -277,7 +290,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
                 $height = $s['height'];
             } else {
                 // Hashtag feed: no media_url, try oEmbed
-                $thumbnailUrl = $this->getVideoThumbnail($post->permalink);
+                $thumbnailUrl = $this->getVideoThumbnail(isset($post->permalink) ? $post->permalink : '');
                 if ($thumbnailUrl) {
                     $image_thumbnail_url = $thumbnailUrl;
                     $s = $this->imageCache->size($image_thumbnail_url);
@@ -367,7 +380,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
             if (is_null($facebookPageId) || is_null($instagram_business_account)) {
                 if (defined('FF_LOG_FILE_DEST')) {
                     // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_var_export
-                    @error_log('FFInstagramOfficialAPI getPageId cache miss. FB Page ID: ' . var_export($facebookPageId, true) . ', IG ID: ' . var_export($instagram_business_account, true) . PHP_EOL, 3, FF_LOG_FILE_DEST);
+                    @error_log(\la\core\LAUtils::redactSecrets('FFInstagramOfficialAPI getPageId cache miss. FB Page ID: ' . var_export($facebookPageId, true) . ', IG ID: ' . var_export($instagram_business_account, true) . PHP_EOL), 3, FF_LOG_FILE_DEST);
                 }
                 $request = FFFeedUtils::getFeedDataWithThrowException($url);
                 $json = json_decode($request['response']);
@@ -388,7 +401,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
                         $instagram_business_account = $item->instagram_business_account->id;
                         if (defined('FF_LOG_FILE_DEST')) {
                             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-                            @error_log('FFInstagramOfficialAPI getPageId setting cache. Found IG ID on page: ' . $pageName . ' (' . $pageId . '). Item: ' . print_r($item, true) . PHP_EOL, 3, FF_LOG_FILE_DEST);
+                            @error_log(\la\core\LAUtils::redactSecrets('FFInstagramOfficialAPI getPageId setting cache. Found IG ID on page: ' . $pageName . ' (' . $pageId . '). Item: ' . print_r($item, true) . PHP_EOL), 3, FF_LOG_FILE_DEST);
                         }
                         $this->cache->set(md5('instagram_business_account'), $instagram_business_account, 60 * 60 * 24);//one day
                         break;
@@ -399,7 +412,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
                      $msg = 'Could not find an Instagram Business Account connected to any of your Facebook Pages. Please ensure you have converted your Instagram account to a Professional/Business account and connected it to a Facebook Page.';
                      if (defined('FF_LOG_FILE_DEST')) {
                         // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log, WordPress.PHP.DevelopmentFunctions.error_log_print_r
-                        @error_log('FFInstagramOfficialAPI Error: ' . $msg . ' Response: ' . print_r($json, true) . PHP_EOL, 3, FF_LOG_FILE_DEST);
+                        @error_log(\la\core\LAUtils::redactSecrets('FFInstagramOfficialAPI Error: ' . $msg . ' Response: ' . print_r($json, true) . PHP_EOL), 3, FF_LOG_FILE_DEST);
                      }
                      // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped
                      throw new LASocialException($msg);
@@ -462,6 +475,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
      */
     private function getVideoThumbnail($permalink)
     {
+        if (empty($permalink)) return null;
         $version = self::$version;
         $accessToken = $this->facebookCache->getAccessToken();
         $encodedUrl = urlencode($permalink);
@@ -508,7 +522,7 @@ class FFInstagramOfficialAPI implements FFInstagramAPI
     {
         if (defined('FF_LOG_FILE_DEST')) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            @error_log('resolveInstagramIdFromToken: ' . $hint . PHP_EOL, 3, FF_LOG_FILE_DEST);
+            @error_log(\la\core\LAUtils::redactSecrets('resolveInstagramIdFromToken: ' . $hint . PHP_EOL), 3, FF_LOG_FILE_DEST);
         }
         $endpoint = 'https://graph.facebook.com/v19.0/me/accounts?fields=id,name,instagram_business_account&access_token=' . urlencode($accessToken);
         $data = FFFeedUtils::getFeedData($endpoint);

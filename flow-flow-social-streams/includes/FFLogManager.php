@@ -71,7 +71,7 @@ class FFLogManager
                 self::formatBytes(strlen($keep)),
                 self::formatBytes($size)
             );
-            error_log($msg, 3, $file);
+            \la\core\LAUtils::errorLog($msg, 3, $file);
             
             return true;
         } catch (\Exception $e) {
@@ -114,7 +114,7 @@ class FFLogManager
         $formattedMsg .= "\n-----------------------------------\n";
 
         // Failsafe: Use @ to suppress warnings if file is not writable
-        @error_log($formattedMsg, 3, $file);
+        @error_log(\la\core\LAUtils::redactSecrets($formattedMsg), 3, $file);
     }
 }
 

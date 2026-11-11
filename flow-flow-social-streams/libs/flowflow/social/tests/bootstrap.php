@@ -1,11 +1,13 @@
 <?php
-if ( ! defined( 'ABSPATH' ) ) {
-	if ( ! defined( 'WPINC' ) && ( ! defined( 'FF_USE_WP' ) || FF_USE_WP ) ) {
-		exit;
-	}
+// Test bootstrap: CLI only. The WPINC check the rest of the library uses cannot
+// serve as the direct-access guard here, because this file defines WPINC itself.
+if ( PHP_SAPI !== 'cli' ) {
+	exit;
 }
 // phpcs:disable
-define('WPINC', true);
+if ( ! defined( 'WPINC' ) ) {
+	define('WPINC', true);
+}
 
 $path = __DIR__ . '/../src/';
 
@@ -25,6 +27,14 @@ require_once $path . 'flow/social/FFPinterest.php';
 require_once $path . 'flow/social/FFInstagram.php';
 require_once $path . 'flow/social/FFLinkedIn.php';
 
-require_once '/Users/navdeykin/Projects/FlowSocial/vendor/autoload.php';
+$autoload = __DIR__ . '/../vendor/autoload.php';
+if ( ! file_exists( $autoload ) ) {
+	$autoload = __DIR__ . '/../../../../vendor/autoload.php';
+}
+if ( ! file_exists( $autoload ) ) {
+	fwrite(STDERR, "Composer dependencies are missing: run `composer install` in " . realpath(__DIR__ . '/..') . "\n");
+	exit(1);
+}
+require_once $autoload;
 
 // phpcs:enable

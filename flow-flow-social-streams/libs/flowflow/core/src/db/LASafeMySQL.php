@@ -10,6 +10,11 @@ use SafeMySQL;
  * @copyright 2014-2020 Looks Awesome
  */
 class LASafeMySQL extends SafeMySQL {
+    /** @var bool set once close() has run, so later calls stay no-ops */
+    private $closed = false;
+    private $transactionActive = false;
+    private $autoCommitEnabled = true;
+
     function __construct( $opt = [] ) {
         if (FF_USE_WP && defined('FF_USE_WPDB') && FF_USE_WPDB == true) {
             require_once('LAWPDB.php');
@@ -99,35 +104,77 @@ class LASafeMySQL extends SafeMySQL {
         return $this->autocommit(false);
     }
 
+    public function inTransaction() {
+        return $this->transactionActive;
+    }
+
+    protected function rawQuery($query) {
+        // COMMIT leaves autocommit disabled. The next query can start another
+        // transaction, which must also remain on this physical connection.
+        if (!$this->autoCommitEnabled) $this->transactionActive = true;
+        return parent::rawQuery($query);
+    }
+
     /**
      * @param bool $mode
      * @return bool
      */
     public function autocommit($mode){
-        return $this->conn->autocommit($mode);
+        if (!$this->isOpen()) return false;
+        $result = $this->conn->autocommit($mode);
+        if ($result) {
+            $this->autoCommitEnabled = (bool)$mode;
+            $this->transactionActive = !$mode;
+        }
+        return $result;
     }
 
     public function commit() {
-        return $this->conn->commit();
+        if (!$this->isOpen()) return false;
+        $result = $this->conn->commit();
+        if ($result) $this->transactionActive = false;
+        return $result;
     }
 
     public function rollback() {
-        $result = $this->conn->rollback();
-        $this->autocommit(true);
-        return $result;
+        try {
+            if (!$this->isOpen()) return false;
+            if ($this->conn->rollback() && $this->autocommit(true)) return true;
+        } catch (\Throwable $error) {
+            // A disconnected transaction cannot be resumed. Closing releases
+            // the guard so the caller can record failure on a new connection.
+            try { $this->close(); } catch (\Throwable $ignored) {}
+            throw $error;
+        }
+        $this->close();
+        return false;
     }
 
     public function rollbackAndClose() {
-        $result = $this->rollback();
-        $this->close();
-        return $result;
+        try {
+            return $this->rollback();
+        } finally {
+            $this->close();
+        }
     }
 
     public function close() {
-        if ($this->conn instanceof \mysqli && @$this->conn->thread_id) {
-            return $this->conn->close();
-        }
-        return false;
+        $open = $this->isOpen();
+        $this->closed = true;
+        $this->transactionActive = false;
+        $this->autoCommitEnabled = true;
+        if (!$open) return false;
+        return $this->conn->close();
+    }
+
+    /**
+     * Whether the underlying handle is still usable. Never reads a property of a
+     * closed mysqli: PHP 8 throws an Error there, which @ does not suppress.
+     *
+     * @return bool
+     */
+    private function isOpen() {
+        return !$this->closed && $this->conn instanceof \mysqli;
     }
 
     public function getError() {

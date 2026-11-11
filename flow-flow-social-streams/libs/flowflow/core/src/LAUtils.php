@@ -116,4 +116,81 @@ class LAUtils {
         return $val;
         // phpcs:enable
     }
+
+    /**
+     * Reads a boolean request flag. Absent, empty, '0', 'false', 'no' and 'nope' are false.
+     *
+     * @param string $key
+     * @return bool
+     */
+    public static function request_flag($key) {
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+        if (!isset($_REQUEST[$key]) || !is_scalar($_REQUEST[$key])) return false;
+        $value = strtolower(trim((string)$_REQUEST[$key]));
+        return !in_array($value, ['', '0', 'false', 'no', 'nope'], true);
+    }
+
+    /**
+     * Client address for rate limiting. Forwarding headers are client controlled, so they
+     * are trusted only behind a private-network proxy or when the
+     * flow_flow_trust_proxy_headers filter opts in (for example behind Cloudflare).
+     *
+     * @return string
+     */
+    public static function client_ip() {
+        $remote = isset($_SERVER['REMOTE_ADDR']) ? (string)$_SERVER['REMOTE_ADDR'] : '0.0.0.0';
+        $behindLocalProxy = filter_var($remote, FILTER_VALIDATE_IP)
+            && !filter_var($remote, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE);
+        $trust = function_exists('apply_filters') ? apply_filters('flow_flow_trust_proxy_headers', $behindLocalProxy) : $behindLocalProxy;
+        if ($trust) {
+            foreach (['HTTP_CF_CONNECTING_IP', 'HTTP_X_FORWARDED_FOR', 'HTTP_X_REAL_IP'] as $header) {
+                if (empty($_SERVER[$header])) continue;
+                $ip = trim(explode(',', (string)$_SERVER[$header])[0]);
+                if (filter_var($ip, FILTER_VALIDATE_IP)) return $ip;
+            }
+        }
+        return $remote;
+    }
+
+    /**
+     * Masks credentials before text is written to the debug log, which may be web readable.
+     * Covers query strings, JSON, print_r and var_export output, bearer headers, and bare
+     * tokens recognised by their provider prefix (Facebook, Instagram, TikTok, LinkedIn, Google).
+     *
+     * @param string $text
+     * @return string
+     */
+    public static function redactSecrets($text) {
+        if (!is_string($text) || $text === '') {
+            return $text;
+        }
+        $key = '[A-Za-z0-9_]*(?:token|secret|api_?key|_key|verifier)|apikey|appsecret_proof|password|nonce|security';
+        $patterns = [
+            '/\\b(' . $key . '|code|key)(=|%3D)[^&#\\s"\'<>]+/i' => '$1$2[REDACTED]',
+            '/("(?:' . $key . ')"\\s*:\\s*")(?:[^"\\\\]|\\\\.)*"/i' => '$1[REDACTED]"',
+            '/(\\[(?:' . $key . ')\\]\\s*=>\\s*)[^\\r\\n]+/i' => '$1[REDACTED]',
+            '/(\'(?:' . $key . ')\'\\s*=>\\s*\')(?:[^\'\\\\]|\\\\.)*\'/i' => '$1[REDACTED]\'',
+            '/\\b(Bearer\\s+)[^\\s"\'<>,;]+/i' => '$1[REDACTED]',
+            // Bare tokens: keep the provider prefix so the log still says which one it was.
+            '/\\b(EAA|IGQV|IGAA|AIza|ya29\\.|act\\.|rft\\.)[A-Za-z0-9!*._-]{16,}/' => '$1[REDACTED]',
+            '/\\b(AQ)[A-Za-z0-9_-]{60,}/' => '$1[REDACTED]',
+        ];
+        $redacted = preg_replace(array_keys($patterns), array_values($patterns), $text);
+        return $redacted === null ? '[log entry withheld: redaction failed]' : $redacted;
+    }
+
+    /**
+     * error_log() with redactSecrets() applied, so PHP's error log never receives a credential either.
+     *
+     * @param mixed $message
+     * @param int $type
+     * @param string|null $destination
+     * @return bool
+     */
+    public static function errorLog($message, $type = 0, $destination = null) {
+        if (is_string($message)) {
+            $message = self::redactSecrets($message);
+        }
+        return $destination === null ? error_log($message, $type) : error_log($message, $type, $destination);
+    }
 }

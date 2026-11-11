@@ -48,8 +48,8 @@ class FFInstagram extends FFBaseFeed implements LAFeedWithComments{
             }
         } catch ( LASocialRequestException $sre ) {
             // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-            error_log($sre->getMessage());
-//            error_log(print_r($sre, true));
+            \la\core\LAUtils::errorLog($sre->getMessage());
+//            \la\core\LAUtils::errorLog(print_r($sre, true));
             $request_errors = $sre->getRequestErrors();
             $message = is_object($request_errors) ? 'Error getting data from instagram server' : $this->filterErrorMessage($request_errors);
             if ($message === 'Invalid user id'){

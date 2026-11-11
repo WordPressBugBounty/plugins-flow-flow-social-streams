@@ -40,18 +40,18 @@ abstract class LADBMigrationManager
         $log = defined('FF_LOG_FILE_DEST') ? FF_LOG_FILE_DEST : null;
         $version = $this->getDBVersion();
         if ($log) {
-            //error_log('[Flow-Flow Migration Manager] Current DB version: ' . $version . PHP_EOL, 3, $log);
+            //\la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Current DB version: ' . $version . PHP_EOL, 3, $log);
         }
 
         if (!$force && !$this->hasMigrations4Perform($version)) {
             if ($log) {
-                //error_log('[Flow-Flow Migration Manager] No migrations to perform' . PHP_EOL, 3, $log);
+                //\la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] No migrations to perform' . PHP_EOL, 3, $log);
             }
             return;
         }
 
         if ($log) {
-            error_log('[Flow-Flow Migration Manager] Starting migration process' . PHP_EOL, 3, $log);
+            \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Starting migration process' . PHP_EOL, 3, $log);
         }
 
         $dbm = LAUtils::dbm($this->context);
@@ -60,7 +60,7 @@ abstract class LADBMigrationManager
             if ($conn->autocommit(false)) {
                 if ($this->needStartInitMigration($version) || $force) {
                     if ($log)
-                        error_log('[Flow-Flow Migration Manager] Running' . ($force ? ' FORCED ' : ' ') . 'INIT migration' . PHP_EOL, 3, $log);
+                        \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Running' . ($force ? ' FORCED ' : ' ') . 'INIT migration' . PHP_EOL, 3, $log);
                     foreach ($this->getInitMigration() as $max_version => $migration) {
                         $migration->execute($conn, $dbm);
                         if (!$force) $dbm->setOption('db_version', $max_version);
@@ -68,44 +68,44 @@ abstract class LADBMigrationManager
                     
                     if ($force) {
                         if ($log)
-                            error_log('[Flow-Flow Migration Manager] Running FORCED incremental migrations' . PHP_EOL, 3, $log);
+                            \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Running FORCED incremental migrations' . PHP_EOL, 3, $log);
                         foreach ($this->getMigrations() as $migration) {
                             $migrationVersion = $migration->version();
                             if ($migrationVersion == self::INIT_MIGRATION) continue;
                             if ($log)
-                                error_log('[Flow-Flow Migration Manager] Executing migration ' . $migrationVersion . PHP_EOL, 3, $log);
+                                \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Executing migration ' . $migrationVersion . PHP_EOL, 3, $log);
                             $migration->execute($conn, $dbm);
                         }
                     }
                 } else {
                     if ($log)
-                        error_log('[Flow-Flow Migration Manager] Running incremental migrations' . PHP_EOL, 3, $log);
+                        \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Running incremental migrations' . PHP_EOL, 3, $log);
                     foreach ($this->getMigrations() as $migration) {
                         $migrationVersion = $migration->version();
                         if ($log)
-                            error_log('[Flow-Flow Migration Manager] Checking migration ' . $migrationVersion . PHP_EOL, 3, $log);
+                            \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Checking migration ' . $migrationVersion . PHP_EOL, 3, $log);
                         if ($this->needExecuteMigration($version, $migrationVersion)) {
                             if ($log)
-                                error_log('[Flow-Flow Migration Manager] Executing migration ' . $migrationVersion . PHP_EOL, 3, $log);
+                                \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Executing migration ' . $migrationVersion . PHP_EOL, 3, $log);
                             $migration->execute($conn, $dbm);
                             $dbm->setOption('db_version', $migrationVersion);
                             if ($log)
-                                error_log('[Flow-Flow Migration Manager] Completed migration ' . $migrationVersion . PHP_EOL, 3, $log);
+                                \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Completed migration ' . $migrationVersion . PHP_EOL, 3, $log);
                         } else {
                             if ($log)
-                                error_log('[Flow-Flow Migration Manager] Skipping migration ' . $migrationVersion . PHP_EOL, 3, $log);
+                                \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Skipping migration ' . $migrationVersion . PHP_EOL, 3, $log);
                         }
                     }
                 }
                 $conn->commit();
                 if ($log)
-                    error_log('[Flow-Flow Migration Manager] Migration process completed successfully' . PHP_EOL, 3, $log);
+                    \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] Migration process completed successfully' . PHP_EOL, 3, $log);
             }
         } catch (Exception $e) {
             if ($log)
-                error_log('[Flow-Flow Migration Manager] EXCEPTION during migration: ' . $e->getMessage() . PHP_EOL, 3, $log);
+                \la\core\LAUtils::errorLog('[Flow-Flow Migration Manager] EXCEPTION during migration: ' . $e->getMessage() . PHP_EOL, 3, $log);
             if ($log)
-                error_log($e->getTraceAsString() . PHP_EOL, 3, $log);
+                \la\core\LAUtils::errorLog($e->getTraceAsString() . PHP_EOL, 3, $log);
             $conn->rollback();
             $conn->close();
             throw $e;
@@ -140,7 +140,7 @@ abstract class LADBMigrationManager
             $version = $wpdb->get_var($wpdb->prepare('select value from ' . $table . ' where id = %s', $option));
             if (null == $version) {
                 $e = new Exception('Can`t get the db version of plugin');
-                error_log($e->getTraceAsString());
+                \la\core\LAUtils::errorLog($e->getTraceAsString());
                 return self::INIT_MIGRATION;
             }
         }
@@ -160,12 +160,15 @@ abstract class LADBMigrationManager
     {
         $migrations = $this->getMigrations();
 
-        $max = self::INIT_MIGRATION;
+        // version_compare orders 5.10 after 5.9; a numeric comparison would not.
+        $max = null;
         foreach ($migrations as $version => $migration) {
-            if ($max < $version) {
+            if ($version === self::INIT_MIGRATION) continue;
+            if ($max === null || version_compare((string)$version, (string)$max, '>')) {
                 $max = $version;
             }
         }
+        if ($max === null) $max = self::INIT_MIGRATION;
         return [$max => $migrations[self::INIT_MIGRATION]];
     }
 

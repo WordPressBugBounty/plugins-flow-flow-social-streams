@@ -49,6 +49,29 @@ function ff_time_h($ts){
                 ?>
             </p>
         </div>
+
+        <div class="ff-card">
+            <h4>LinkedIn Images API Backoff</h4>
+            <p>
+                <?php
+                $liBackoff = $status['linkedin_backoff'] ?? [];
+                if (!empty($liBackoff['active'])) {
+                    $remMin = ceil(($liBackoff['remaining'] ?? 0) / 60);
+                    $retries = $liBackoff['retry_count'] ?? 0;
+                    echo '<span class="ff-badge ff-warn">ACTIVE (Throttled)</span><br>';
+                    echo '<span style="font-size:12px;color:#666;">Paused for another ' . $remMin . ' min';
+                    if ($retries > 1) {
+                        echo ' (retry #' . $retries . ', exponential backoff)';
+                    }
+                    echo '</span><br><br>';
+                    echo '<button type="button" class="button ff-clear-li-backoff" style="font-size:11px;">Clear Backoff</button>';
+                } else {
+                    echo '<span class="ff-badge ff-ok">NORMAL</span><br>';
+                    echo '<span style="font-size:12px;color:#666;">Operating normally</span>';
+                }
+                ?>
+            </p>
+        </div>
     </div>
 
     <div class="ff-log">
@@ -142,6 +165,23 @@ function ff_time_h($ts){
     })
   }
 
+  function bindLiBackoff(){
+    const btn = document.querySelector('.ff-clear-li-backoff')
+    if (!btn) return
+    btn.addEventListener('click', () => {
+      btn.disabled = true
+      btn.textContent = 'Clearing…'
+      post('clear_linkedin_backoff', {}).then(resp => {
+        alert(resp && resp.success ? (resp.data && resp.data.message || 'Backoff cleared') : 'Failed')
+        window.location.reload()
+      }).catch(() => {
+        alert('Request failed')
+      }).finally(() => {
+        btn.disabled = false
+      })
+    })
+  }
+
   function loadLog(){
     const ta = document.querySelector('.ff-log-content')
     if (!ta) return
@@ -165,6 +205,7 @@ function ff_time_h($ts){
 
   document.addEventListener('DOMContentLoaded', function(){
     bindRunNow()
+    bindLiBackoff()
     bindLogButtons()
     loadLog()
   })

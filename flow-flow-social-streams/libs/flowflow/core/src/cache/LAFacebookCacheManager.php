@@ -58,7 +58,7 @@ class LAFacebookCacheManager implements ILAFacebookCacheManager {
             $cache->delete(md5('instagram_business_account'));
         } catch (Exception $e) {
             if (defined('FF_LOG_FILE_DEST')) {
-                @error_log('LAFacebookCacheManager clean cache error: ' . $e->getMessage() . PHP_EOL, 3, FF_LOG_FILE_DEST);
+                @error_log(\la\core\LAUtils::redactSecrets('LAFacebookCacheManager clean cache error: ' . $e->getMessage() . PHP_EOL), 3, FF_LOG_FILE_DEST);
             }
         }
     }
@@ -294,7 +294,7 @@ class LAFacebookCacheManager implements ILAFacebookCacheManager {
                 } catch (Exception $e) {
                     $conn->rollback();
                     // Log error but don't fail the request as data is already fetched
-                    error_log('Flow-Flow: Failed to update Facebook rate limit counter: ' . $e->getMessage());
+                    \la\core\LAUtils::errorLog('Flow-Flow: Failed to update Facebook rate limit counter: ' . $e->getMessage());
                 }
             }
         }
